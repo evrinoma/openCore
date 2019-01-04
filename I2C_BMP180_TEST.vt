@@ -1,0 +1,158 @@
+`timescale 10 ns/ 10 ps
+module I2C_BMP180_vlg_tst();
+
+// test vector input registers
+reg clk;
+reg reset;
+reg treg_scl;
+reg treg_sda;
+reg swGPress;
+reg swGTemp;
+reg swId;
+reg swPress;
+reg swSettings;
+reg swShow;
+reg swTemp;
+// wires                                               
+wire [7:0]  out;
+wire ready;
+wire scl;
+wire sda;
+
+reg en_scl;
+reg en_sda;
+
+reg [7:0]data;
+reg [7:0]count;
+
+// assign statements (if any)                          
+assign scl = (en_scl) ? treg_scl : 1'bZ;
+assign sda = (en_sda) ? treg_sda : 1'bZ;
+
+I2C_BMP180 ENTITY (
+// port map - connection between master ports and signals/registers   
+	.clk(clk),
+	.out(out),
+	.ready(ready),
+	.reset(reset),
+	.scl(scl),
+	.sda(sda),
+	.swGPress(swGPress),
+	.swGTemp(swGTemp),
+	.swId(swId),
+	.swPress(swPress),
+	.swSettings(swSettings),
+	.swShow(swShow),
+	.swTemp(swTemp)
+);
+
+event GET_ID;
+event GET_SETTINGS;
+event SET_TEMP;
+event SET_PRESS;
+event GET_TEMP;
+event GET_PRESS;
+event GET_DATA;
+
+initial
+begin
+swId = 1'd1;
+swPress = 1'd1;
+swSettings = 1'd1;
+swShow = 1'd1;
+swTemp = 1'd1;
+swGTemp = 1'd1;
+swPress = 1'd1;
+swGPress = 1'd1;
+clk = 1'b0; 
+count = 7;
+en_scl = 1'b0;
+en_sda = 1'b0;
+//сброс
+reset = 1'b1;
+#500
+reset = 1'b0;
+#15000
+reset = 1'b1;
+end
+
+always
+begin
+#50 clk = ~clk; //1MHz
+end
+
+initial 
+begin
+	forever begin
+		@(SET_PRESS)
+			//нажали кнопку изменить режим на получение давления
+			swPress = 1'b0;
+			#70000
+			swPress = 1'b1;
+			//пришел сигнал подтверждения приема 1 байта
+			#300000
+			en_sda = 1'b1;
+			treg_sda = 1'b0;
+			#20000
+			en_sda = 1'b0;
+			//пришел сигнал подтверждения приема 2 байта
+			#365000
+			en_sda = 1'b1;
+			treg_sda = 1'b0;
+			#20000
+			en_sda = 1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(GET_ID)
+			data = 8'h55;
+			//нажали кнопку получить id микрухи
+			swId = 1'b0;
+			#70000
+			swId = 1'b1;
+			//пришел сигнал подтверждения приема 1 байта
+			#300000
+			en_sda = 1'b1;
+			treg_sda = 1'b0;
+			#20000
+			en_sda = 1'b0;
+			//пришел сигнал подтверждения приема 2 байта
+			#365000
+			en_sda = 1'b1;
+			treg_sda = 1'b0;
+			#20000
+			en_sda = 1'b0;
+			//пришел сигнал подтверждения приема 3 байта
+			#355000
+			en_sda = 1'b1;
+			treg_sda = 1'b0;
+			#20000
+			en_sda = 1'b0;
+			//генерируем ответ
+			#75000
+			en_sda = 1'b1;
+			repeat(8)
+			begin
+				treg_sda = data[count];
+				#38500
+				count = count - 1;
+			end			
+			#15000
+			treg_sda = 1'b0;
+			en_sda = 1'b0;
+			
+	end
+end
+   
+initial 
+begin
+#30000 ->GET_ID;	
+//#30000 ->SET_PRESS;	
+#2000000 $stop;
+end
+	
+endmodule
+
