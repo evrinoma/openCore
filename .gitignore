@@ -2,3 +2,5 @@
 !.gitignore
 !*.v
 !*.vt
+!*.bdf
+!*.bsf
