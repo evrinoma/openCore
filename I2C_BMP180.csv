@@ -1,0 +1,48 @@
+# Copyright (C) 2017  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel MegaCore Function License Agreement, or other 
+# applicable license agreement, including, without limitation, 
+# that your use is for the sole purpose of programming logic 
+# devices manufactured by Intel and sold by Intel or its 
+# authorized distributors.  Please refer to the applicable 
+# agreement for further details.
+
+# Quartus Prime Version 17.0.0 Build 595 04/25/2017 SJ Standard Edition
+# File: /opt/DISK/Develop/QUARTUS/I2C_BMP180/I2C_BMP180.csv
+# Generated on: Sat Jan  5 10:41:42 2019
+
+# Note: The column header names should not be changed if you wish to import this .csv file into the Quartus Prime software.
+
+To,Direction,Location,I/O Bank,VREF Group,Fitter Location,I/O Standard,Reserved,Current Strength,Slew Rate,Differential Pair,Strict Preservation
+clk,Input,PIN_23,1,B1_N0,PIN_23,2.5 V,,,,,
+dataout[7],Output,PIN_69,4,B4_N0,PIN_69,2.5 V,,,,,
+dataout[6],Output,PIN_68,4,B4_N0,PIN_68,2.5 V,,,,,
+dataout[5],Output,PIN_67,4,B4_N0,PIN_67,2.5 V,,,,,
+dataout[4],Output,PIN_66,4,B4_N0,PIN_66,2.5 V,,,,,
+dataout[3],Output,PIN_64,4,B4_N0,PIN_64,2.5 V,,,,,
+dataout[2],Output,PIN_60,4,B4_N0,PIN_60,2.5 V,,,,,
+dataout[1],Output,PIN_59,4,B4_N0,PIN_59,2.5 V,,,,,
+dataout[0],Output,PIN_58,4,B4_N0,PIN_58,2.5 V,,,,,
+out[7],Output,PIN_115,7,B7_N0,PIN_115,2.5 V,,,,,
+out[6],Output,PIN_114,7,B7_N0,PIN_114,2.5 V,,,,,
+out[5],Output,PIN_113,7,B7_N0,PIN_113,2.5 V,,,,,
+out[4],Output,PIN_112,7,B7_N0,PIN_112,2.5 V,,,,,
+out[3],Output,PIN_111,7,B7_N0,PIN_111,2.5 V,,,,,
+out[2],Output,PIN_110,7,B7_N0,PIN_110,2.5 V,,,,,
+out[1],Output,PIN_106,6,B6_N0,PIN_106,2.5 V,,,,,
+out[0],Output,PIN_104,6,B6_N0,PIN_104,2.5 V,,,,,
+receive,Output,PIN_28,2,B2_N0,PIN_28,2.5 V,,,,,
+Received,Input,PIN_125,7,B7_N0,PIN_125,2.5 V,,,,,
+reset,Input,PIN_88,5,B5_N0,PIN_88,2.5 V,,,,,
+send,Output,PIN_30,2,B2_N0,PIN_30,2.5 V,,,,,
+Sended,Input,PIN_124,7,B7_N0,PIN_124,2.5 V,,,,,
+sendout,Output,PIN_34,2,B2_N0,PIN_34,2.5 V,,,,,
+start,Output,PIN_32,2,B2_N0,PIN_32,2.5 V,,,,,
+swId,Input,PIN_24,2,B2_N0,PIN_24,2.5 V,,,,,
+swShow,Input,PIN_25,2,B2_N0,PIN_25,2.5 V,,,,,

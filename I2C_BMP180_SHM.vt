@@ -1,0 +1,53 @@
+`timescale 10 ns/ 10 ps
+module BMP180_SHM_vlg_tst();
+// constants                                           
+// general purpose registers
+reg eachvec;
+// test vector input registers
+reg clk;
+reg reset;
+reg swId;
+reg swShow;
+// wires                                               
+wire [7:0]  dataout;
+wire [7:0]  out;
+wire receive;
+wire send;
+wire start;
+
+// assign statements (if any)                          
+BMP180_TEST i1 (
+// port map - connection between master ports and signals/registers   
+	.clk(clk),
+	.dataout(dataout),
+	.out(out),
+	.receive(receive),
+	.reset(reset),
+	.send(send),
+	.start(start),
+	.swId(swId),
+	.swShow(swShow)
+);
+
+initial
+begin
+clk = 1'b0; 
+reset = 1'b1;
+#500
+reset = 1'b0;
+#1500
+reset = 1'b1;
+end
+
+always
+begin
+#50 clk = ~clk; //1MHz
+end
+
+initial 
+begin
+#300000 $stop;
+end
+                              
+endmodule
+

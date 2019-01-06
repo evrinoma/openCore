@@ -1,0 +1,26 @@
+# Copyright (C) 2017  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel MegaCore Function License Agreement, or other 
+# applicable license agreement, including, without limitation, 
+# that your use is for the sole purpose of programming logic 
+# devices manufactured by Intel and sold by Intel or its 
+# authorized distributors.  Please refer to the applicable 
+# agreement for further details.
+
+# Quartus Prime Version 17.0.0 Build 595 04/25/2017 SJ Standard Edition
+# File: /opt/DISK/Develop/QUARTUS/I2C_BMP180/output_files/I2C_BMP180.csv
+# Generated on: Sat Jan  5 11:10:14 2019
+
+# Note: The column header names should not be changed if you wish to import this .csv file into the Quartus Prime software.
+
+To,Direction,Location,I/O Bank,VREF Group,Fitter Location,I/O Standard,Reserved,Current Strength,Slew Rate,Differential Pair,Strict Preservation
+clk,Input,PIN_23,1,B1_N0,PIN_23,2.5 V,,,,,
+en,Input,PIN_24,2,B2_N0,PIN_24,2.5 V,,,,,
+out,Output,PIN_58,4,B4_N0,PIN_58,2.5 V,,,,,
+out1,Output,PIN_59,4,B4_N0,PIN_59,2.5 V,,,,,

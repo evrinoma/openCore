@@ -4,3 +4,6 @@
 !*.vt
 !*.bdf
 !*.bsf
+!*.csv
+!*.qsf
+!*.qpf
