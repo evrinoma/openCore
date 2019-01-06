@@ -78,7 +78,12 @@ end
 
 always
 begin
-#50 clk = ~clk; //1MHz
+//10+10 = 20ns = 50Mhz
+//#1 clk = ~clk; 
+//#50 clk = ~clk;1MHz 
+//#50 clk = ~clk;  
+//2500000ns = 400 hz
+#125000 clk = ~clk;  
 end
 
 initial 

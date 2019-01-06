@@ -45,10 +45,10 @@ localparam STATE_GET_SETTINGS	= 4'd7;
 localparam STATE_SET_TEMP		= 4'd8;
 localparam STATE_SET_PRESS		= 4'd9;
 localparam STATE_GET_DATA		= 5'd10;
-localparam STATE_BLINK			= 4'd11;
 
 localparam MAX					= 16'h00FF;
-localparam NULL				= 8'h00;
+localparam NULL_16			= 16'h0000;
+localparam NULL_8				= 8'h00;
 
 localparam MAX_DATA			= 8'd21;
 
@@ -67,9 +67,9 @@ wire			read;
 
 integer i;
 
-assign datasend = (pCommand==2)? data[7:0] : (pCommand==1)? data[15:8] : (pCommand==0)? data[23:16] : NULL;
+assign datasend = (pCommand==2)? data[7:0] : (pCommand==1)? data[15:8] : (pCommand==0)? data[23:16] : NULL_8;
 assign read = datasend[0];
-assign out = (pOut <= MAX_DATA)? Data[pOut]: NULL;
+assign out = (pOut <= MAX_DATA)? Data[pOut]: NULL_8;
 
 
 always@(posedge clk)
@@ -79,14 +79,14 @@ if (!reset)
 		state 			<= STATE_IDLE;
 		send 				<= 1'b0;
 		receive 			<= 1'b0;
-		delay 			<= 16'd0;
+		delay 			<= NULL_16;
 		pCommand 		<= 2'd2;
-		pData				<= 8'd0;
+		pData				<= NULL_8;
 		data				<= 23'd0;
 		lastSended		<= 1'b0;	
 		lastReceived	<= 1'b0;	
 		start				<= 1'b1;
-		pOut				<= 8'd0;
+		pOut				<= NULL_8;
 	end
 else
 	begin
@@ -97,7 +97,7 @@ else
 								if(delay == MAX) 
 									begin
 										state 		<= STATE_GET_ID;
-										delay 		<= 16'd0;
+										delay 		<= NULL_16;
 									end
 								else
 									delay <= delay + 16'd1;
@@ -106,7 +106,7 @@ else
 								if(delay == MAX) 
 									begin
 										state 		<= STATE_GET_SETTINGS;
-										delay 		<= 16'd0;
+										delay 		<= NULL_16;
 									end
 								else
 									delay <= delay + 16'd1;
@@ -115,7 +115,7 @@ else
 								if(delay == MAX) 
 									begin
 										state 		<= STATE_SET_TEMP;
-										delay 		<= 16'd0;
+										delay 		<= NULL_16;
 									end
 								else
 									delay <= delay + 16'd1;
@@ -124,7 +124,7 @@ else
 								if(delay == MAX) 
 									begin
 										state 		<= STATE_SET_PRESS;
-										delay 		<= 16'd0;
+										delay 		<= NULL_16;
 									end
 								else
 									delay <= delay + 16'd1;
@@ -133,7 +133,7 @@ else
 								if(delay == MAX) 
 									begin
 										state <= STATE_GET_DATA;
-										delay <= 16'd0;
+										delay <= NULL_16;
 									end
 								else
 									delay <= delay + 16'd1;
@@ -142,7 +142,7 @@ else
 								if(delay == MAX) 
 									begin
 										state <= STATE_GET_DATA;
-										delay <= 16'd0;
+										delay <= NULL_16;
 									end
 								else
 									delay <= delay + 16'd1;
@@ -151,7 +151,7 @@ else
 								if(delay == MAX) 
 									begin
 										state <= STATE_SHOW;
-										delay <= 16'd0;
+										delay <= NULL_16;
 									end
 								else
 									delay <= delay + 16'd1;
@@ -162,7 +162,7 @@ else
 				receive	 	<= 1'b0;
 				lastSended	<= 1'b0;
 				lastReceived	<= 1'b0;
-				pOut				<= 8'd0;
+				pOut				<= NULL_8;
 			end
 			STATE_GET_ID: begin
 				data[7:0]	<=	{ADR,!READ};
@@ -205,10 +205,10 @@ else
 				pCommand 	<= 2'd2;
 			end
 			STATE_START: begin
-				if(delay == (MAX/4) )
+				if(delay == MAX )
 					begin
 						state <= STATE_COMMAND;
-						delay <= 16'd0;
+						delay <= NULL_16;
 						start	<=	1'b1;
 					end
 				else
@@ -230,33 +230,31 @@ else
 												send 		<= 1'b1;
 												receive	<= 1'b0;
 											end
-										pCommand <= pCommand - 2'd1;
-										lastSended <= sended;
+										pCommand <= pCommand - 2'd1;										
 									 end
 							2'b10: begin
 										send 		<= 1'b0;
 										receive	<= 1'b0;
 										if(pCommand == 2'd0)
 											begin
-												if (pData == 8'hFF)
+											//если данные не принимаются то переходим в ожидание
+											if (pData == 8'hFF)
 													state 		<= STATE_IDLE;
-												else
+											else
 													state 		<= STATE_GET;
-											end
-										lastSended <= sended;
+											end										
 									 end
 						endcase
-				
+				lastSended <= sended;
 			end
 			STATE_GET:begin
 				case ({lastReceived,received})
 					2'b01: begin
-								if (pData != NULL) 
+								if (pData != NULL_8) 
 									begin
 										receive	<= 1'b1;
 									end
-								pData <= pData - 8'd1;
-								
+								pData <= pData - 8'd1;								
 							 end
 					2'b10: begin
 								receive	<= 1'b0;
@@ -264,8 +262,7 @@ else
 									state 		<= STATE_IDLE;
 								pCommand 	<= 2'h3;
 							 end
-				endcase
-				
+				endcase				
 				lastReceived	<= received;	
 			end
 			STATE_SHOW: begin
@@ -273,26 +270,21 @@ else
 					begin
 						if(delay == MAX) 
 							begin
-								if (pOut==MAX_DATA) 
-									state 		<= STATE_BLINK;
-								pOut <= pOut + 8'd1;
-								delay <= 16'd0;
+								if (pOut==MAX_DATA)
+									begin
+									state 		<= STATE_IDLE;
+									end
+								else	
+									begin
+										pOut <= pOut + 8'd1;
+										delay <= NULL_16;
+									end
 							end
 						else
 							delay <= delay + 8'd1;
 					end
 				else
 					delay <= 16'd0;
-			end
-			STATE_BLINK: begin
-				if(delay == MAX) 
-					begin
-						pOut <= pOut - 16'd1;
-						state 		<= STATE_SHOW;
-						delay <= 16'd0;
-					end
-				else
-					delay <= delay + 16'd1;
 			end
 		endcase
 	end	
@@ -304,7 +296,7 @@ begin
 	if(!reset)
 		begin
 			for(i=0;i<(MAX_DATA+1);i=i+1)
-				Data[i] = NULL;
+				Data[i] = NULL_8;
 		end
 	else
 		begin
