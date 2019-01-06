@@ -1,7 +1,8 @@
-module SINGLE_GENERATOR(clk, start, out);
+module SINGLE_GENERATOR(clk, reset, start, out);
 
 input 	wire clk;
 input 	wire start;
+input 	wire reset;
 
 output	wire out;
 wire lstart;
@@ -15,6 +16,7 @@ shift shift (
 
 waitCount waitCount (
 	.clk(clk), //
+	.reset(reset),
 	.start(lstart),
 	.out(out) //
 );

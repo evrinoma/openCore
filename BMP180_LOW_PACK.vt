@@ -5,9 +5,12 @@ reg clk;
 reg reset;
 reg swId;
 reg swShow;
+reg swPush;
+reg swSend;
 // wires                                               
 wire [7:0]  datasend;
 wire [7:0]  out;
+wire [3:0]  stateOut;
 wire receive;
 wire send;
 wire start;
@@ -23,27 +26,54 @@ BMP180_LOW_PACK i1 (
 	  .send(send),
 	  .start(start),
 	  .swId(swId),
-	  .swShow(swShow)
+	  .swShow(swShow),
+	  .wsPush(swPush),
+	  .wsSend(swSend),
+	.stateOut(stateOut)
 );
 
 initial
 begin
 clk = 1'b0; 
+swId = 1'b1;
+swShow = 1'b1;
+swPush = 1'b1;
+swSend = 1'b1;
 reset = 1'b1;
 #500
 reset = 1'b0;
 #1500
 reset = 1'b1;
+#500
+swId = 1'b0;
+#1500
+swId = 1'b1;
+#1500
+swSend=1'b0;
+#1500
+swSend=1'b1;
+#1500
+swSend=1'b0;
+#1500
+swSend=1'b1;
 end
 
 always
 begin
-#50 clk = ~clk; //1MHz
+#5 clk = ~clk; //1MHz
 end
 
 initial 
 begin
-#30000000 $stop;
+#700000 swPush = 1'b0;
+#300000 swPush = 1'b1;
+#700000 swPush = 1'b0;
+#300000 swPush = 1'b1;
+#700000 swShow = 1'b0;
+#300000 swShow = 1'b1;
+#700000 swShow = 1'b0;
+#300000 swShow = 1'b1;
+#1000000 $stop;
 end
                               
 endmodule
