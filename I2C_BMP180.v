@@ -25,10 +25,16 @@ wire send;
 wire sended;
 wire start;
 
+wire freq1Mhz;
+
+DIV_CLK DIV_CLK(
+.clk(clk), 
+.freq1Mhz(freq1Mhz)
+);
 
 I2C_MASTER I2C_MASTER (
 // port map - connection between master ports and signals/registers   
-	.clk(clk), //
+	.clk(freq1Mhz), //
 	.datareceive(datareceive),
 	.datasend(datasend),
 	.ready(ready), //
@@ -46,7 +52,7 @@ I2C_MASTER I2C_MASTER (
 // assign statements (if any)                          
 BMP180 BMP180 (
 // port map - connection between master ports and signals/registers   
-	.clk(clk), //
+	.clk(freq1Mhz), //
 	.datareceive(datareceive),
 	.datasend(datasend),
 	.receive(receive),

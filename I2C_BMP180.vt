@@ -80,9 +80,9 @@ always
 begin
 //ns/20 =hz
 //10+10 = 20ns = 50Mhz
-//#1 clk = ~clk; 
+#1 clk = ~clk; 
 //1000ns = 1MHz
-#50 clk = ~clk;
+//#50 clk = ~clk;
 //500ns = 2MHz
 //#25 clk = ~clk;
 //2000ns = 0.5MHz
