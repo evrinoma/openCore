@@ -22,7 +22,7 @@ reg dscl = 1;						//данные выставляемые на линию scl
 reg rw	= 1;						//операция - поумолчанию чтение read = 1 write = 0
 reg ask	= 1;						//подтверждение приема
 reg waitSend	= 0;				//новая порция данных для отправки в ведомого
-reg waitReceive	= 0;				//новая порция данных для приема с ведомого
+reg waitReceive	= 0;			//новая порция данных для приема с ведомого
 reg isRestarted	= 0;			//передача перезапущена на прием данных
 
 reg[3:0]	count;					//счетчик пересылаемых байт
@@ -49,6 +49,16 @@ localparam STATE_WAIT_GEN_ACK		= 4'd13;
 localparam STATE_GEN_ACK			= 4'd14;
 localparam STATE_NO_GEN_ACK		= 4'd15;
 
+//0.25MHz основная частота QUARTER8 - 2.5kHz HALF8 - 1.25kHz  scl период 0.4kHz
+//0.25MHz основная частота QUARTER8 - 2.5kHz HALF8 - 1.25kHz  scl период 0.625kHz
+//0.5MHz основная частота  QUARTER8 - 5kHz HALF8 - 2.5kHz  scl период 1.25kHz
+//1MHz основная частота  QUARTER8 - 10kHz HALF8 - 5kHz  scl период 2.5kHz
+//2MHz основная частота  QUARTER8 - 20kHz HALF8 - 10kHz scl период 5kHz
+//4MHz основная частота  QUARTER8 - 40kHz HALF8 - 20kHz scl период 10kHz
+localparam ZERO8						= 8'd0;
+localparam ONE8						= 8'd1;
+localparam QUARTER8					= 8'd100;
+localparam HALF8						= 8'd200;
 
 assign sda = (zsda) ? 1'bz : dsda;
 assign scl = (zscl) ? 1'bz : dscl;
@@ -101,7 +111,7 @@ begin
 					end
 				zsda	<= 0;
 				dsda	<= 0;
-				count <= 4'd7;				
+//!!				count <= 4'd7;				
 			end			
 			STATE_GET_SEND: begin	//осуществляем выборку данных
 				if (stateScl == STATE_GET_SEND) 
@@ -122,7 +132,7 @@ begin
 						else
 							stateSda <= STATE_GET_SEND;
 					end
-				zsda	<= 0;
+				//!!zsda	<= 0;
 			end
 			STATE_WAIT_ACK: begin
 				if (stateScl == STATE_ACK) 
@@ -282,7 +292,7 @@ begin
 			zscl	<= 0;
 			dscl	<= 1;	
 			stateScl <= STATE_IDLE;
-			delay <= 8'd0;
+			delay <= ZERO8;
 		end
 	else
 		begin
@@ -291,175 +301,175 @@ begin
 				zscl	<= 0;
 				dscl	<= 1;
 				stateScl <= STATE_IDLE;
-				delay <= 8'd0;
+				delay <= ZERO8;
 			end
 			STATE_START: begin		
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin //исходим из того что частота работы 400кГц берем пол интервала и просаживаем scl в ноль
 						stateScl <= STATE_START;									
-						delay <= 8'd100;
+						delay <= QUARTER8;
 					end
 				else 
-					delay <= delay + 8'd1;
-				if (delay < 8'd100)
+					delay <= delay + ONE8;
+				if (delay < QUARTER8)
 					dscl	<= 1;
 				else
 					dscl	<= 0;
 				zscl	<= 0;
 			end	
 			STATE_GET_SEND: begin
-				if (delay == 8'd200)
+				if (delay == HALF8)
 					begin 
 						stateScl <= STATE_GET_SEND;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 0;
 				zscl	<= 0;
 			end		
 			STATE_SEND: begin		
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_SEND;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 1;
 				zscl	<= 0;
 			end
 			STATE_WAIT_ACK: begin
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_ACK;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 0;
 				zscl	<= 0;
 			end
 			STATE_ACK: begin
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_WAIT_SCL;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 1;
 				zscl	<= 0;		
 			end
 			STATE_WAIT_SCL: begin
 				if (scl == 0) 
 					begin
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else 
 					begin
-						if (delay == 8'd200) 
+						if (delay == HALF8) 
 							begin //ждем пол периода прижатия слайвом нуля если прижал значит даем ему время на переработку байта
 								stateScl <= STATE_SCL;
-								delay <= 8'd0;
+								delay <= ZERO8;
 							end
 						else
-							delay <= delay + 8'd1;
+							delay <= delay + ONE8;
 					end
 				zscl	<= 1;		
 			end
 			STATE_WAIT_RESTART: begin
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_WAIT_RESTART;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
-				if (delay < 8'd100)
+					delay <= delay + ONE8;
+				if (delay < QUARTER8)
 					dscl	<= 0;
 				else
 					dscl	<= 1;
 				zscl	<= 0;
 			end
 			STATE_RESTART: begin
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_RESTART;
-						delay <= 8'd100;
+						delay <= QUARTER8;
 					end
 				else
-					delay <= delay + 8'd1;
-				if (delay < 8'd100)
+					delay <= delay + ONE8;
+				if (delay < QUARTER8)
 					dscl	<= 1;
 				else
 					dscl	<= 0;
 				zscl	<= 0;
 			end
 			STATE_GET_RECEIVE: begin
-				if (delay == 8'd200)
+				if (delay == HALF8)
 					begin 
 						stateScl <= STATE_GET_RECEIVE;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 0;
 				zscl	<= 0;
 			end		
 			STATE_RECEIVE: begin		
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_RECEIVE;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 1;
 				zscl	<= 0;
 			end
 			STATE_WAIT_GEN_ACK: begin		
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_WAIT_GEN_ACK;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 0;
 				zscl	<= 0;
 			end
 			STATE_GEN_ACK: begin		
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_GEN_ACK;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 1;
 				zscl	<= 0;
 			end
 			STATE_NO_GEN_ACK: begin		
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_NO_GEN_ACK;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
+					delay <= delay + ONE8;
 				dscl	<= 1;
 				zscl	<= 0;
 			end				
 			STATE_STOP: begin	
-				if (delay == 8'd200) 
+				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_IDLE;
-						delay <= 8'd0;
+						delay <= ZERO8;
 					end
 				else
-					delay <= delay + 8'd1;
-				if (delay < 8'd100)
+					delay <= delay + ONE8;
+				if (delay < QUARTER8)
 					dscl	<= 0;
 				else
 					dscl	<= 1;

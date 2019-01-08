@@ -78,36 +78,92 @@ end
 
 always
 begin
+//ns/20 =hz
 //10+10 = 20ns = 50Mhz
 //#1 clk = ~clk; 
-//#50 clk = ~clk;1MHz 
-//#50 clk = ~clk;  
+//1000ns = 1MHz
+#50 clk = ~clk;
+//500ns = 2MHz
+//#25 clk = ~clk;
+//2000ns = 0.5MHz
+//#100 clk = ~clk;
+//4000ns = 0.25MHz
+//#200 clk = ~clk;
+//scl 500Hz
+//#250 clk = ~clk;
+//6220 scl 400Hz
+//#311 clk = ~clk;
 //2500000ns = 400 hz
-#125000 clk = ~clk;  
+//#125000 clk = ~clk;  
 end
 
-initial 
-begin
-	forever begin
-		@(SET_PRESS)
-			//нажали кнопку изменить режим на получение давления
-			swPress = 1'b0;
-			#70000
-			swPress = 1'b1;
-			//пришел сигнал подтверждения приема 1 байта
-			#300000
-			en_sda = 1'b1;
-			treg_sda = 1'b0;
-			#20000
-			en_sda = 1'b0;
-			//пришел сигнал подтверждения приема 2 байта
-			#365000
-			en_sda = 1'b1;
-			treg_sda = 1'b0;
-			#20000
-			en_sda = 1'b0;
-	end
-end
+//initial 
+//begin
+//	forever begin
+//		@(SET_PRESS)
+//			//нажали кнопку изменить режим на получение давления
+//			swPress = 1'b0;
+//			#70000
+//			swPress = 1'b1;
+//			//пришел сигнал подтверждения приема 1 байта
+//			#300000
+//			en_sda = 1'b1;
+//			treg_sda = 1'b0;
+//			#20000
+//			en_sda = 1'b0;
+//			//пришел сигнал подтверждения приема 2 байта
+//			#365000
+//			en_sda = 1'b1;
+//			treg_sda = 1'b0;
+//			#20000
+//			en_sda = 1'b0;
+//	end
+//end
+//
+//initial 
+//begin
+//	forever begin
+//		@(GET_ID)
+//			data = 8'h55;
+//			//нажали кнопку получить id микрухи
+//			swId = 1'b0;
+//			#200000
+//			swId = 1'b1;
+//			//пришел сигнал подтверждения приема 1 байта
+//			#430000
+//			en_sda = 1'b1;
+//			treg_sda = 1'b0;
+//			#20000
+//			en_sda = 1'b0;
+//			//пришел сигнал подтверждения приема 2 байта
+//			#365000
+//			en_sda = 1'b1;
+//			treg_sda = 1'b0;
+//			#20000
+//			en_sda = 1'b0;
+//			//пришел сигнал подтверждения приема 3 байта
+//			#355000
+//			en_sda = 1'b1;
+//			treg_sda = 1'b0;
+//			#20000
+//			en_sda = 1'b0;
+//			//генерируем ответ
+//			#75000
+//			en_sda = 1'b1;
+//			repeat(8)
+//			begin
+//				treg_sda = data[count];
+//				#38500
+//				count = count - 1;
+//			end			
+//			#15000
+//			treg_sda = 1'b0;
+//			en_sda = 1'b0;
+//			
+//	end
+//end
+
+
 
 initial 
 begin
@@ -151,7 +207,7 @@ begin
 			
 	end
 end
-   
+
 initial 
 begin
 #30000 ->GET_ID;	
