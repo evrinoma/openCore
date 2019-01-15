@@ -1,4 +1,6 @@
-module BMP180(swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, clk, reset, start, send, datasend, sended, receive, datareceive, received, out);
+module BMP180(swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
+isReady,
+clk, reset, start, send, datasend, sended, receive, datareceive, received, out);
 
 input		wire clk;
 
@@ -12,6 +14,7 @@ input		wire swShow;				//кнопка режим - прочитать показ
 
 input		wire reset;					//сброс
 output	reg start;					//запустить транзакцию
+input		wire isReady;				//готовность к новой транзакции
 
 output	reg send;					//отправить новую порцию данных до тех пор пока истинно
 output	wire [7:0] datasend;		//адрес и данные, которые шлем в устройство,  а так же тут задаем тип операции - чтения или записи данных
@@ -35,16 +38,17 @@ localparam CONFIG_TEMP 		= 8'h2E;
 localparam CONFIG_PRESS		= 8'h34+(OSS <<  6);
 
 localparam STATE_IDLE			= 4'd0;
-localparam STATE_START			= 4'd1;
-localparam STATE_SETTINGS		= 4'd2;
-localparam STATE_COMMAND		= 4'd3;
-localparam STATE_GET				= 4'd4;
-localparam STATE_SHOW			= 4'd5;
-localparam STATE_GET_ID			= 4'd6;
-localparam STATE_GET_SETTINGS	= 4'd7;
-localparam STATE_SET_TEMP		= 4'd8;
-localparam STATE_SET_PRESS		= 4'd9;
-localparam STATE_GET_DATA		= 5'd10;
+localparam STATE_WAIT_READY	= 4'd1;
+localparam STATE_START			= 4'd2;
+localparam STATE_SETTINGS		= 4'd3;
+localparam STATE_COMMAND		= 4'd4;
+localparam STATE_GET				= 4'd5;
+localparam STATE_SHOW			= 4'd6;
+localparam STATE_GET_ID			= 4'd7;
+localparam STATE_GET_SETTINGS	= 4'd8;
+localparam STATE_SET_TEMP		= 4'd9;
+localparam STATE_SET_PRESS		= 4'd10;
+localparam STATE_GET_DATA		= 5'd11;
 
 localparam MAX					= 16'h00FF;
 localparam NULL_16			= 16'h0000;
@@ -168,7 +172,7 @@ else
 				data[7:0]	<=	{ADR,!READ};
 				data[15:8]	<=	ADR_ID;
 				data[23:16]	<=	{ADR, READ};
-				state 		<= STATE_START;
+				state 		<= STATE_WAIT_READY;
 				pData			<= 8'd0;
 				pCommand 	<= 2'd2;	
 			end
@@ -176,7 +180,7 @@ else
 				data[7:0]	<=	{ADR,!READ};
 				data[15:8]	<=	ADR_SETTINGS;
 				data[23:16]	<=	{ADR, READ};
-				state 		<= STATE_START;				
+				state 		<= STATE_WAIT_READY;				
 				pData			<= 8'd21;
 				pCommand 	<= 2'd2;
 			end
@@ -184,7 +188,7 @@ else
 				data[7:0]	<=	{ADR,!READ};
 				data[15:8]	<=	ADR_CONFIG;
 				data[23:16]	<=	{CONFIG_PRESS};
-				state 		<= STATE_START;
+				state 		<= STATE_WAIT_READY;
 				pData			<= 8'hFF;
 				pCommand 	<= 2'd2;	
 			end
@@ -192,7 +196,7 @@ else
 				data[7:0]	<=	{ADR,!READ};
 				data[15:8]	<=	ADR_CONFIG;
 				data[23:16]	<=	{CONFIG_TEMP};
-				state 		<= STATE_START;
+				state 		<= STATE_WAIT_READY;
 				pData			<= 8'hFF;
 				pCommand 	<= 2'd2;
 			end
@@ -200,9 +204,15 @@ else
 				data[7:0]	<=	{ADR,!READ};
 				data[15:8]	<=	ADR_DATA;
 				data[23:16]	<=	{ADR, READ};
-				state 		<= STATE_START;
+				state 		<= STATE_WAIT_READY;
 				pData			<= 8'd2;
 				pCommand 	<= 2'd2;
+			end
+			STATE_WAIT_READY:begin
+				if (isReady) 
+				begin						
+					state <= STATE_START;
+				end
 			end
 			STATE_START: begin
 				if(delay == MAX )

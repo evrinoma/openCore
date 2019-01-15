@@ -1,4 +1,14 @@
-module I2C_BMP180(swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, clk, reset, out, ready, scl, sda);
+module I2C_BMP180(
+freq1Mhz,
+receive,
+received,
+send,
+sended,
+start,
+swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, clk, reset, out, ready, 
+scl, 
+sda
+);
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
 input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
@@ -19,13 +29,13 @@ inout 	scl;							//сигнал тактирования I2C
 
 wire [7:0] datareceive;
 wire [7:0] datasend;
-wire receive;
-wire received;
-wire send;
-wire sended;
-wire start;
-
-wire freq1Mhz;
+output wire receive;
+output wire received;
+output wire send;
+output wire sended;
+output wire start;
+ 
+output wire freq1Mhz;
 
 DIV_CLK DIV_CLK(
 .clk(clk), 
@@ -35,8 +45,8 @@ DIV_CLK DIV_CLK(
 I2C_MASTER I2C_MASTER (
 // port map - connection between master ports and signals/registers   
 	.clk(freq1Mhz), //
-	.datareceive(datareceive),
-	.datasend(datasend),
+	.datareceive(out), //out
+	.datasend(datasend), //datasend
 	.ready(ready), //
 	.receive(receive),
 	.received(received),
@@ -53,8 +63,8 @@ I2C_MASTER I2C_MASTER (
 BMP180 BMP180 (
 // port map - connection between master ports and signals/registers   
 	.clk(freq1Mhz), //
-	.datareceive(datareceive),
-	.datasend(datasend),
+	.datareceive(out),
+	.datasend(datasend), //datasend
 	.receive(receive),
 	.received(received),
 	.reset(reset), //
@@ -68,7 +78,8 @@ BMP180 BMP180 (
 	.swSettings(swSettings), //
 	.swShow(swShow), //
 	.swTemp(swTemp), //
-	.out(out) //
+	.isReady(ready),
+	.out(datareceive) //out
 );
 
 endmodule

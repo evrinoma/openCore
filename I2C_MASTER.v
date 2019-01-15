@@ -57,12 +57,12 @@ localparam STATE_NO_GEN_ACK		= 4'd15;
 //4MHz основная частота  QUARTER8 - 40kHz HALF8 - 20kHz scl период 10kHz
 localparam ZERO8						= 8'd0;
 localparam ONE8						= 8'd1;
-localparam QUARTER8					= 8'd100;
-localparam HALF8						= 8'd200;
+localparam QUARTER8					= 8'd99;
+localparam HALF8						= 8'd199;
 
 assign sda = (zsda) ? 1'bz : dsda;
 assign scl = (zscl) ? 1'bz : dscl;
-assign ready = (stateSda	== STATE_IDLE) ? 1 : 0;
+assign ready = (stateSda == STATE_IDLE) ? 1 : 0;
 
 always@(posedge clk)
 begin
