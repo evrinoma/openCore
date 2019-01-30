@@ -74,6 +74,11 @@ reset = 1'b1;
 reset = 1'b0;
 #15000
 reset = 1'b1;
+#30000
+//нажали кнопку получить id микрухи
+swId = 1'b0;
+#40000
+swId = 1'b1;
 end
 
 always
@@ -170,38 +175,35 @@ begin
 	forever begin
 		@(GET_ID)
 			data = 8'h55;
-			//нажали кнопку получить id микрухи
-			swId = 1'b0;
-			#70000
-			swId = 1'b1;
+			#29069
 			//пришел сигнал подтверждения приема 1 байта
-			#300000
+
 			en_sda = 1'b1;
 			treg_sda = 1'b0;
-			#20000
+			#800
 			en_sda = 1'b0;
 			//пришел сигнал подтверждения приема 2 байта
-			#365000
+			#8700
 			en_sda = 1'b1;
 			treg_sda = 1'b0;
-			#20000
+			#800
 			en_sda = 1'b0;
 			//пришел сигнал подтверждения приема 3 байта
-			#355000
+			#8700
 			en_sda = 1'b1;
 			treg_sda = 1'b0;
-			#20000
+			#800
 			en_sda = 1'b0;
 			//генерируем ответ
-			#75000
+			#1700
 			en_sda = 1'b1;
 			repeat(8)
 			begin
 				treg_sda = data[count];
-				#38500
+				#1000
 				count = count - 1;
 			end			
-			#15000
+			#500
 			treg_sda = 1'b0;
 			en_sda = 1'b0;
 			
@@ -212,7 +214,7 @@ initial
 begin
 #30000 ->GET_ID;	
 //#30000 ->SET_PRESS;	
-#2000000 $stop;
+#90000 $stop;
 end
 	
 endmodule

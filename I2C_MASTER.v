@@ -57,8 +57,19 @@ localparam STATE_NO_GEN_ACK		= 4'd15;
 //4MHz основная частота  QUARTER8 - 40kHz HALF8 - 20kHz scl период 10kHz
 localparam ZERO8						= 8'd0;
 localparam ONE8						= 8'd1;
-localparam QUARTER8					= 8'd99;
-localparam HALF8						= 8'd199;
+//clkScl 2.5kHz clk 1Mhz
+//localparam QUARTER8					= 8'd99;
+//localparam HALF8						= 8'd199;
+//clkScl 5kHz clk 1Mhz
+//localparam QUARTER8					= 8'd49;
+//localparam HALF8						= 8'd99;
+//clkScl 50kHz clk 5Mhz
+//localparam QUARTER8					= 8'd24;
+//localparam HALF8						= 8'd49;
+//clkScl 100kHz clk 5Mhz
+localparam QUARTER8					= 8'd12;
+localparam HALF8						= 8'd24;
+
 
 assign sda = (zsda) ? 1'bz : dsda;
 assign scl = (zscl) ? 1'bz : dscl;
