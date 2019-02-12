@@ -66,9 +66,14 @@ localparam ONE8						= 8'd1;
 //clkScl 50kHz clk 5Mhz
 //localparam QUARTER8					= 8'd24;
 //localparam HALF8						= 8'd49;
+
 //clkScl 100kHz clk 5Mhz
-localparam QUARTER8					= 8'd12;
-localparam HALF8						= 8'd24;
+//localparam QUARTER8					= 8'd12;
+//localparam HALF8						= 8'd24;
+//clkScl 100kHz clk 25Mhz
+localparam QUARTER8					= 8'd62;
+localparam HALF8						= 8'd124;
+
 
 
 assign sda = (zsda) ? 1'bz : dsda;
@@ -121,8 +126,7 @@ begin
 						stateSda <= STATE_GET_SEND;	
 					end
 				zsda	<= 0;
-				dsda	<= 0;
-//!!				count <= 4'd7;				
+				dsda	<= 0;		
 			end			
 			STATE_GET_SEND: begin	//осуществляем выборку данных
 				if (stateScl == STATE_GET_SEND) 
@@ -131,6 +135,7 @@ begin
 						count <= count - 4'd1;
 					end
 				dsda	<= datasend[count];
+				ask	<= 1;
 			end
 			STATE_SEND: begin
 				if (stateScl == STATE_SEND) 
@@ -139,17 +144,16 @@ begin
 							begin
 								stateSda <= STATE_WAIT_ACK;
 								count <= 4'd7;
+								rw	<=	datasend[0];
 							end
 						else
 							stateSda <= STATE_GET_SEND;
 					end
-				//!!zsda	<= 0;
 			end
 			STATE_WAIT_ACK: begin
 				if (stateScl == STATE_ACK) 
 					begin //ожидаем когда начнется этап приема данных подтверждения
-						stateSda <= STATE_ACK;
-						rw	<=	datasend[0];
+						stateSda <= STATE_ACK;						
 					end
 				zsda	<= 1;	
 			end
