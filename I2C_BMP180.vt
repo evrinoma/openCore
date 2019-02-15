@@ -47,12 +47,12 @@ I2C_BMP180 ENTITY (
 );
 
 event GET_ID;
-event GET_SETTINGS;
-event SET_TEMP;
-event SET_PRESS;
-event GET_TEMP;
-event GET_PRESS;
-event GET_DATA;
+//event GET_SETTINGS;
+//event SET_TEMP;
+//event SET_PRESS;
+//event GET_TEMP;
+//event GET_PRESS;
+//event GET_DATA;
 
 initial
 begin
@@ -175,7 +175,7 @@ begin
 	forever begin
 		@(GET_ID)
 			data = 8'h55;
-			#25000
+			#25250
 			//пришел сигнал подтверждения приема 1 байта
 
 			en_sda = 1'b1;
