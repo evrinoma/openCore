@@ -1,11 +1,14 @@
 module I2C_BMP180(
-freq1Mhz,
 receive,
 received,
 send,
 sended,
 start,
-swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, clk, reset, out, ready, 
+swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
+clk, 
+reset, 
+out, 
+ready, 
 scl, 
 sda
 );
@@ -34,17 +37,10 @@ output wire received;
 output wire send;
 output wire sended;
 output wire start;
- 
-output wire freq1Mhz;
-
-DIV_CLK DIV_CLK(
-.clk(clk), 
-.freq1Mhz(freq1Mhz)
-);
 
 I2C_MASTER I2C_MASTER (
 // port map - connection between master ports and signals/registers   
-	.clk(freq1Mhz), //
+	.clk(clk), //
 	.datareceive(out), //out
 	.datasend(datasend), //datasend
 	.ready(ready), //
@@ -62,7 +58,7 @@ I2C_MASTER I2C_MASTER (
 // assign statements (if any)                          
 BMP180 BMP180 (
 // port map - connection between master ports and signals/registers   
-	.clk(freq1Mhz), //
+	.clk(clk), //
 	.datareceive(out),
 	.datasend(datasend), //datasend
 	.receive(receive),
