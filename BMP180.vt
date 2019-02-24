@@ -107,6 +107,8 @@ begin
 	forever begin
 		@(EVENT_RECEIVED)
 			#0 
+			datareceive = 8'h77;
+			#100
 			received = 1'b1;
 			#100 
 			received = 1'b0;
@@ -119,7 +121,6 @@ begin
 		@(EVENT_SW_ID)
 			#500
 			swId = 1'b0;
-			datareceive = 8'h77;
 			#2500
 			swId = 1'b1;
 	end

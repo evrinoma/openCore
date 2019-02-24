@@ -6,18 +6,26 @@ reg clk;
 reg reset;
 reg treg_scl;
 reg treg_sda;
-reg swGPress;
-reg swGTemp;
+
 reg swId;
-reg swPress;
 reg swSettings;
-reg swShow;
 reg swTemp;
+reg swPress;
+reg swGTemp;
+reg swGPress;
+reg swShow;
+
 // wires                                               
 wire [7:0]  out;
 wire ready;
 wire scl;
 wire sda;
+
+wire receive;
+wire received;
+wire send;
+wire sended;
+wire start;
 
 reg en_scl;
 reg en_sda;
@@ -31,6 +39,11 @@ assign sda = (en_sda) ? treg_sda : 1'bZ;
 
 I2C_BMP180 ENTITY (
 // port map - connection between master ports and signals/registers   
+	.receive(receive),
+	.received(received),
+	.send(send),
+	.sended(sended),
+	.start(start),
 	.clk(clk),
 	.out(out),
 	.ready(ready),
@@ -46,40 +59,11 @@ I2C_BMP180 ENTITY (
 	.swTemp(swTemp)
 );
 
-event GET_ID;
-//event GET_SETTINGS;
-//event SET_TEMP;
-//event SET_PRESS;
-//event GET_TEMP;
-//event GET_PRESS;
-//event GET_DATA;
 
-initial
-begin
-swId = 1'd1;
-swPress = 1'd1;
-swSettings = 1'd1;
-swShow = 1'd1;
-swTemp = 1'd1;
-swGTemp = 1'd1;
-swPress = 1'd1;
-swGPress = 1'd1;
-clk = 1'b0; 
-count = 7;
-en_scl = 1'b0;
-en_sda = 1'b0;
-//сброс
-reset = 1'b1;
-#500
-reset = 1'b0;
-#15000
-reset = 1'b1;
-#30000
-//нажали кнопку получить id микрухи
-swId = 1'b0;
-#40000
-swId = 1'b1;
-end
+event EVENT_INIT;
+event EVENT_RESET;
+event EVENT_SW_ID;
+event EVENT_ACK;
 
 always
 begin
@@ -102,126 +86,70 @@ begin
 //#125000 clk = ~clk;  
 end
 
-//initial 
-//begin
-//	forever begin
-//		@(SET_PRESS)
-//			//нажали кнопку изменить режим на получение давления
-//			swPress = 1'b0;
-//			#70000
-//			swPress = 1'b1;
-//			//пришел сигнал подтверждения приема 1 байта
-//			#300000
-//			en_sda = 1'b1;
-//			treg_sda = 1'b0;
-//			#20000
-//			en_sda = 1'b0;
-//			//пришел сигнал подтверждения приема 2 байта
-//			#365000
-//			en_sda = 1'b1;
-//			treg_sda = 1'b0;
-//			#20000
-//			en_sda = 1'b0;
-//	end
-//end
-//
-//initial 
-//begin
-//	forever begin
-//		@(GET_ID)
-//			data = 8'h55;
-//			//нажали кнопку получить id микрухи
-//			swId = 1'b0;
-//			#200000
-//			swId = 1'b1;
-//			//пришел сигнал подтверждения приема 1 байта
-//			#430000
-//			en_sda = 1'b1;
-//			treg_sda = 1'b0;
-//			#20000
-//			en_sda = 1'b0;
-//			//пришел сигнал подтверждения приема 2 байта
-//			#365000
-//			en_sda = 1'b1;
-//			treg_sda = 1'b0;
-//			#20000
-//			en_sda = 1'b0;
-//			//пришел сигнал подтверждения приема 3 байта
-//			#355000
-//			en_sda = 1'b1;
-//			treg_sda = 1'b0;
-//			#20000
-//			en_sda = 1'b0;
-//			//генерируем ответ
-//			#75000
-//			en_sda = 1'b1;
-//			repeat(8)
-//			begin
-//				treg_sda = data[count];
-//				#38500
-//				count = count - 1;
-//			end			
-//			#15000
-//			treg_sda = 1'b0;
-//			en_sda = 1'b0;
-//			
-//	end
-//end
-
-
-
 initial 
 begin
 	forever begin
-		@(GET_ID)
-			data = 8'h55;
-			#25250
-			//пришел сигнал подтверждения приема 1 байта
-
-			en_sda = 1'b1;
-			treg_sda = 1'b0;
-			#600
-			en_sda = 1'b0;
-			
-			#600
-			en_scl = 1'b1;
-			treg_scl = 1'b0;
-			#600
+		@(EVENT_INIT)
+			#0
+			clk = 1'b0; 
+			swId = 1'b1;
+			swShow = 1'b1;
+			swGPress = 1'b1;
+			swGTemp = 1'b1;
+			swPress = 1'b1;
+			swSettings = 1'b1;
+			swTemp = 1'b1;
 			en_scl = 1'b0;
-			
-		   //пришел сигнал подтверждения приема 2 байта
-			#7600
-			en_sda = 1'b1;
-			treg_sda = 1'b0;
-			#600
 			en_sda = 1'b0;
-			//пришел сигнал подтверждения приема 3 байта
-			#8900
-			en_sda = 1'b1;
-			treg_sda = 1'b0;
-			#600
-			en_sda = 1'b0;
-			//генерируем ответ
-			#1500
-			en_sda = 1'b1;
-			repeat(8)
-			begin
-				treg_sda = data[count];
-				#1000
-				count = count - 1;
-			end			
-			#400
-			treg_sda = 1'b0;
-			en_sda = 1'b0;
-			
+			reset = 1'b1;
 	end
 end
 
 initial 
 begin
-#30000 ->GET_ID;	
-//#30000 ->SET_PRESS;	
-#90000 $stop;
+	forever begin
+		@(EVENT_RESET)
+			#0
+			reset = 1'b0;
+			//при сбросе i2c master выдает готовность и сбрасывает сигналы sended и received
+			#1000
+			reset = 1'b1;
+	end
+end
+	
+initial 
+begin
+	forever begin
+		@(EVENT_SW_ID)
+			#500
+			swId = 1'b0;
+			#2500
+			swId = 1'b1;
+	end
+end
+
+
+initial 
+begin
+	forever begin
+		@(EVENT_ACK)
+			#0
+			en_sda = 1'b1;
+			treg_sda = 1'b0;
+			#200
+			en_sda = 1'b0;
+	end
+end
+
+
+initial 
+begin
+#0		->EVENT_INIT;
+#500	->EVENT_RESET;
+#1500	->EVENT_SW_ID;
+#5000	->EVENT_ACK;
+#4500	->EVENT_ACK;
+#10000 $stop;
 end
 	
 endmodule

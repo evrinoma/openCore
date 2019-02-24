@@ -66,7 +66,7 @@ reg[26:0] 	data;
 
 reg[3:0] 	state;
 reg[15:0]	delayFSM;
-reg[15:0]	delayLock;
+reg[15:0]	delayStart;
 reg[2:0]		pCommand;
 reg[7:0]		pData;
 reg[7:0]		pOut;
@@ -238,7 +238,7 @@ begin
 			lockStart		<= 1'b1;				//сброс бита start
 			lockSend			<= 1'b1;				//сброс шины данных
 			lockReceive		<= 1'b1;				//сброс бита start
-			delayLock		<= DELAY_START;
+			delayStart		<= DELAY_START;
 			
 		end
 	else
@@ -249,24 +249,12 @@ begin
 						lockStart		<= 1'b1;				//сброс бита start
 						lockSend			<= 1'b1;				//сброс шины данных
 						lockReceive		<= 1'b1;				//сброс бита start
-						delayLock		<= DELAY_START;	
+						delayStart		<= DELAY_START;	
 				end	
 				STATE_PREPARE_SEND_3:begin					//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
 						lockDataSend	<= 1'b0;				//разрешаем шину данных
-						delayLock	<= NULL_16;		
-				end								
-//				STATE_COMMAND_SEND_4:begin
-//						lockSend			<= 1'b1;				//сброс шины данных
-//				end
-//				STATE_SEND_5:begin
-//						lockSend			<= 1'b0;
-//				end	
-//				STATE_COMMAND_GET_7:begin
-//						lockReceive			<= 1'b1;				
-//				end			
-//				STATE_GET_8:begin
-//						lockReceive		<= 1'b0;
-//				end				
+						delayStart	<= NULL_16;		
+				end									
 			endcase
 			
 			if(state == STATE_SEND_5) 
@@ -288,13 +276,13 @@ begin
 				end
 				
 				
-			if(delayLock == DELAY_START) 	  //задержка
+			if(delayStart == DELAY_START) 	  //задержка
 				begin		
 					lockStart		<= 1'b1;	  //сброс бита start
 				end
 			else
 				begin
-					delayLock <= delayLock + 16'd1;	
+					delayStart <= delayStart + 16'd1;	
 					lockStart <= 1'b0;	  //сброс бита start
 				end
 		
