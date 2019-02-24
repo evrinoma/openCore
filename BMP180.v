@@ -13,293 +13,293 @@ input		wire swPress;				//кнопка режим - прочитать давл�
 input		wire swShow;				//кнопка режим - прочитать показать принятые данные
 
 input		wire reset;					//сброс
-output	reg start;					//запустить транзакцию
+
 input		wire isReady;				//готовность к новой транзакции
 
-output	reg send;					//отправить новую порцию данных до тех пор пока истинно
+output	wire start;					//запустить транзакцию
+output	wire send;					//отправить новую порцию данных до тех пор пока истинно
+output	wire receive;				//принять новую порцию данных до тех пор пока истинно
+
 output	wire [7:0] datasend;		//адрес и данные, которые шлем в устройство,  а так же тут задаем тип операции - чтения или записи данных
 input		wire sended;				//сигнал записи новой порции данных при много байтном обмене
 
-output	reg receive;				//принять новую порцию данных до тех пор пока истинно
 input		wire[7:0] datareceive;	//регистр принятых данных по шине - полученый байт
 input		wire received;				//готовность полученого байта для выгрузки
 
 output	wire [7:0] out;			//данные
 
 
-localparam ADR 				= 7'h77;
-localparam READ				= 1'h1;
-localparam ADR_ID 			= 8'hD0;
-localparam ADR_SETTINGS 	= 8'hAA;
-localparam ADR_CONFIG 		= 8'hF4;
-localparam ADR_DATA 			= 8'hF6;
-localparam OSS					= 2'h0; 
-localparam CONFIG_TEMP 		= 8'h2E;
-localparam CONFIG_PRESS		= 8'h34+(OSS <<  6);
+localparam ADR 				= 7'h77;		//адрес чипа BMP180
+localparam READ				= 1'h1;		//чтение или запись 
+localparam ADR_ID 			= 8'hD0;		//адрес регистра ID чипа
+localparam START				= 1'h1; 		//режим старт для i2c мастера
+localparam RESTART			= 1'h1; 		//режим рестарт для i2c мастера
+localparam SEND				= 1'h1; 		//
+localparam RECEIVE			= 1'h1; 		//
 
-localparam STATE_IDLE			= 4'd0;
-localparam STATE_WAIT_READY	= 4'd1;
-localparam STATE_START			= 4'd2;
-localparam STATE_SETTINGS		= 4'd3;
-localparam STATE_COMMAND		= 4'd4;
-localparam STATE_GET				= 4'd5;
-localparam STATE_SHOW			= 4'd6;
-localparam STATE_GET_ID			= 4'd7;
-localparam STATE_GET_SETTINGS	= 4'd8;
-localparam STATE_SET_TEMP		= 4'd9;
-localparam STATE_SET_PRESS		= 4'd10;
-localparam STATE_GET_DATA		= 5'd11;
 
-localparam MAX					= 16'h00FF;
+localparam STATE_IDLE_0			= 4'd0;		//состояние ожидани выбора команды
+localparam STATE_GET_ID_1			= 4'd1;
+localparam STATE_WAIT_READY_2	= 4'd2;
+
+localparam STATE_PREPARE_SEND_3	= 4'd3;
+localparam STATE_COMMAND_SEND_4	= 4'd4;
+localparam STATE_SEND_5			= 4'd5;
+
+localparam STATE_PREPARE_GET_6	= 4'd6;
+localparam STATE_COMMAND_GET_7	= 4'd7;
+localparam STATE_GET_8				= 4'd8;
+
+localparam STATE_SHOW			= 4'd9;
+
+
+
+localparam DELAY_START		= 16'h000F;
+localparam DELAY_SW_ID		= 16'h000F;
+localparam DELAY_SW_SHOW	= 16'h00FF;
 localparam NULL_16			= 16'h0000;
 localparam NULL_8				= 8'h00;
 
 localparam MAX_DATA			= 8'd21;
 
-reg[23:0] 	data;
+reg[26:0] 	data;
 
 reg[3:0] 	state;
-reg[15:0]	delay;
+reg[15:0]	delayFSM;
+reg[15:0]	delayLock;
 reg[2:0]		pCommand;
 reg[7:0]		pData;
 reg[7:0]		pOut;
 reg[7:0]		Data	[MAX_DATA:0];
 reg 			lastSended;
 reg 			lastReceived;
+reg 			singleQuery;				//одиночное срабатывание автомата
 
 wire			read;
 
 integer i;
 
-assign datasend = (pCommand==2)? data[7:0] : (pCommand==1)? data[15:8] : (pCommand==0)? data[23:16] : NULL_8;
+reg 			lockDataSend;
+reg 			lockStart;
+reg 			lockSend;
+reg 			lockReceive;
+
+//мапинг ренистра data к примеру посылка чтения ID чипа 
+//08 07 06 05 04 03 02 01 00
+//S  D6 D5 D4 D3 D2 D1 D0 R/W
+//  26   25 24 23 22 21 20 19  18  
+//[ S]  [ADR                ]  [R]  
+//  17   16 15 14 13 12 11 10  09
+//[!S]  [ADR_ID                  ] 
+//  08   07 06 05 04 03 02 01  00
+//[ S]  [ADR                ]  [W]
+assign datasend = !lockDataSend ? ( (pCommand==2) ? data[7:0] : (pCommand==1) ? data[16:9] : (pCommand==0) ? data[25:18] : NULL_8 ) : NULL_8;
+assign start    = !lockStart    ? ( (pCommand==2) ? data[8]   : (pCommand==1) ? data[17]   : (pCommand==0) ? data[26]    : !START ) : !START;
+
+assign send 	=  !lockSend 		? SEND 		: !SEND;
+assign receive =  !lockReceive 	? RECEIVE 	: !RECEIVE;
+
 assign read = datasend[0];
 assign out = (pOut <= MAX_DATA)? Data[pOut]: NULL_8;
 
 
 always@(posedge clk)
 begin
+//при сбросе конечного автомата выставлям параметры
 if (!reset) 
 	begin
-		state 			<= STATE_IDLE;
-		send 				<= 1'b0;
-		receive 			<= 1'b0;
-		delay 			<= NULL_16;
-		pCommand 		<= 2'd2;
-		pData				<= NULL_8;
-		data				<= 23'd0;
+		state 			<= STATE_IDLE_0;		//режим ожидания
+		singleQuery		<= 1'b0;				//одиночное срабатывание автомата сброшено
+		
 		lastSended		<= 1'b0;	
-		lastReceived	<= 1'b0;	
-		start				<= 1'b1;
+		lastReceived	<= 1'b0;
+		
+		pCommand 		<= 2'd2;			
+		pData				<= NULL_8;	
+		
+		delayFSM 			<= NULL_16;
+		data				<= 23'd0;
 		pOut				<= NULL_8;
 	end
 else
 	begin
 		case (state)
-			STATE_IDLE:begin
+			STATE_IDLE_0:begin
 				case({swId, swSettings, swTemp, swPress, swGTemp, swGPress, swShow})
 						7'b0111111:begin
-								if(delay == MAX) 
+								if (!singleQuery)									//первое срабатываение автомата
 									begin
-										state 		<= STATE_GET_ID;
-										delay 		<= NULL_16;
+										if(delayFSM == DELAY_SW_ID) 							//задержка фиксирования факта удержания кнопки swId
+											begin
+												state 		<= STATE_GET_ID_1;	//переходим в режим установки передаваемых по шине I2C значений
+												delayFSM 	<= NULL_16;
+												singleQuery	<= 1'b1;
+											end
+										else
+											delayFSM <= delayFSM + 16'd1;
 									end
-								else
-									delay <= delay + 16'd1;
-							end
-						7'b1011111:begin
-								if(delay == MAX) 
-									begin
-										state 		<= STATE_GET_SETTINGS;
-										delay 		<= NULL_16;
-									end
-								else
-									delay <= delay + 16'd1;
-							end
-						7'b1101111:begin
-								if(delay == MAX) 
-									begin
-										state 		<= STATE_SET_TEMP;
-										delay 		<= NULL_16;
-									end
-								else
-									delay <= delay + 16'd1;
-						end
-						7'b1110111:begin
-								if(delay == MAX) 
-									begin
-										state 		<= STATE_SET_PRESS;
-										delay 		<= NULL_16;
-									end
-								else
-									delay <= delay + 16'd1;
-						end
-						7'b1111011:begin
-								if(delay == MAX) 
-									begin
-										state <= STATE_GET_DATA;
-										delay <= NULL_16;
-									end
-								else
-									delay <= delay + 16'd1;
-						end	
-						7'b1111101:begin
-								if(delay == MAX) 
-									begin
-										state <= STATE_GET_DATA;
-										delay <= NULL_16;
-									end
-								else
-									delay <= delay + 16'd1;
-						end
-						7'b1111110:begin
-								if(delay == MAX) 
-									begin
-										state <= STATE_SHOW;
-										delay <= NULL_16;
-									end
-								else
-									delay <= delay + 16'd1;
-						end			
+							end	
 				endcase
-				start			<= 1'b1;
-				send 			<= 1'b0;
-				receive	 	<= 1'b0;
 				lastSended	<= 1'b0;
 				lastReceived	<= 1'b0;
 				pOut				<= NULL_8;
 			end
-			STATE_GET_ID: begin
-				data[7:0]	<=	{ADR,!READ};
-				data[15:8]	<=	ADR_ID;
-				data[23:16]	<=	{ADR, READ};
-				state 		<= STATE_WAIT_READY;
+			STATE_GET_ID_1: begin							//собираем посылку, устанавливаем указатель передачи и устнавливаем указатель на буфер принятых данных число принимаемых байт
+				data[8:0]	<=	{START,ADR,!READ};
+				data[17:9]	<=	{!START,ADR_ID};
+				data[26:18]	<=	{RESTART,ADR, READ};
+				state 		<= STATE_WAIT_READY_2;		//переходим в режим ожидания готовности автомата I2C
 				pData			<= 8'd0;
 				pCommand 	<= 2'd2;	
-			end
-			STATE_GET_SETTINGS: begin
-				data[7:0]	<=	{ADR,!READ};
-				data[15:8]	<=	ADR_SETTINGS;
-				data[23:16]	<=	{ADR, READ};
-				state 		<= STATE_WAIT_READY;				
-				pData			<= 8'd21;
-				pCommand 	<= 2'd2;
-			end
-			STATE_SET_PRESS: begin
-				data[7:0]	<=	{ADR,!READ};
-				data[15:8]	<=	ADR_CONFIG;
-				data[23:16]	<=	{CONFIG_PRESS};
-				state 		<= STATE_WAIT_READY;
-				pData			<= 8'hFF;
-				pCommand 	<= 2'd2;	
-			end
-			STATE_SET_TEMP: begin
-				data[7:0]	<=	{ADR,!READ};
-				data[15:8]	<=	ADR_CONFIG;
-				data[23:16]	<=	{CONFIG_TEMP};
-				state 		<= STATE_WAIT_READY;
-				pData			<= 8'hFF;
-				pCommand 	<= 2'd2;
-			end
-			STATE_GET_DATA: begin
-				data[7:0]	<=	{ADR,!READ};
-				data[15:8]	<=	ADR_DATA;
-				data[23:16]	<=	{ADR, READ};
-				state 		<= STATE_WAIT_READY;
-				pData			<= 8'd2;
-				pCommand 	<= 2'd2;
-			end
-			STATE_WAIT_READY:begin
+			end		
+			STATE_WAIT_READY_2:begin						//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
 				if (isReady) 
 				begin						
-					state <= STATE_START;
+					state 	<= STATE_PREPARE_SEND_3;
 				end
 			end
-			STATE_START: begin
-				if(delay == MAX )
-					begin
-						state <= STATE_COMMAND;
-						delay <= NULL_16;
-						start	<=	1'b1;
-					end
-				else
-					begin
-						delay <= delay + 16'd1;
-						start	<=	1'b0;
-					end
+			STATE_PREPARE_SEND_3:begin						//разрешаем данные для обработки и формируем сигнал start если он задан
+					state 	<= STATE_COMMAND_SEND_4;
 			end
-			STATE_COMMAND:begin			
-						case ({lastSended,sended})
+			STATE_COMMAND_SEND_4:begin						//дожидаемся ответа от i2c мастера что данные переданы и он готов обработать новую порцию данных
+						case ({lastSended,sended})			//сравниваем состояния сигнала уведомления 
 							2'b01: begin
-										if (read)
-											begin
-												send 		<= 1'b0;
-												receive	<= 1'b1;
-											end
-										else
-											begin
-												send 		<= 1'b1;
-												receive	<= 1'b0;
-											end
+										state 	<= STATE_PREPARE_SEND_3;										
 										pCommand <= pCommand - 2'd1;										
 									 end
 							2'b10: begin
-										send 		<= 1'b0;
-										receive	<= 1'b0;
-										if(pCommand == 2'd0)
-											begin
-											//если данные не принимаются то переходим в ожидание
-											if (pData == 8'hFF)
-													state 		<= STATE_IDLE;
-											else
-													state 		<= STATE_GET;
-											end										
+										state 	<= STATE_SEND_5;																		
 									 end
 						endcase
 				lastSended <= sended;
 			end
-			STATE_GET:begin
-				case ({lastReceived,received})
+			STATE_SEND_5:begin								//получен сгнал от местера что он хочетновую порцию данных
+					if(pCommand == 2'd0)
+						begin
+						if (pData == 8'hFF)
+								state <= STATE_IDLE_0;				//если данные не принимаются то переходим в ожидание
+						else
+								state <= STATE_PREPARE_GET_6;   	//если данные принимаются то переходим в режим приема данных
+						end
+					else 	
+						state <= STATE_COMMAND_SEND_4;
+			end
+			STATE_PREPARE_GET_6:begin
+					state 	<= STATE_COMMAND_GET_7;
+			end
+			STATE_COMMAND_GET_7:begin
+				case ({lastReceived,received})				//сравниваем состояния сигнала уведомления 
 					2'b01: begin
-								if (pData != NULL_8) 
-									begin
-										receive	<= 1'b1;
-									end
+								state 	<= STATE_PREPARE_GET_6;	
 								pData <= pData - 8'd1;								
 							 end
 					2'b10: begin
-								receive	<= 1'b0;
-								if (pData == 8'hFF)
-									state 		<= STATE_IDLE;
-								pCommand 	<= 2'h3;
+								state 	<= STATE_GET_8;																		
 							 end
 				endcase				
 				lastReceived	<= received;	
 			end
+			STATE_GET_8:begin
+					if (pData == 8'hFF)
+						state <= STATE_IDLE_0;
+					else 	
+						state <= STATE_COMMAND_GET_7;
+			end
 			STATE_SHOW: begin
 				if (!swShow) 
 					begin
-						if(delay == MAX) 
+						if(delayFSM == DELAY_SW_SHOW) 
 							begin
 								if (pOut==MAX_DATA)
 									begin
-									state 		<= STATE_IDLE;
+									state 		<= STATE_IDLE_0;
 									end
 								else	
 									begin
 										pOut <= pOut + 8'd1;
-										delay <= NULL_16;
+										delayFSM <= NULL_16;
 									end
 							end
 						else
-							delay <= delay + 8'd1;
+							delayFSM <= delayFSM + 8'd1;
 					end
 				else
-					delay <= 16'd0;
+					delayFSM <= 16'd0;
 			end
 		endcase
 	end	
 end
 
+always@(posedge clk)
+begin
+	if (!reset)
+		begin
+			lockDataSend	<= 1'b1;				//сброс шины данных
+			lockStart		<= 1'b1;				//сброс бита start
+			lockSend			<= 1'b1;				//сброс шины данных
+			lockReceive		<= 1'b1;				//сброс бита start
+			delayLock		<= DELAY_START;
+			
+		end
+	else
+		begin
+			case (state)	
+				STATE_IDLE_0:begin					
+						lockDataSend	<= 1'b1;				//сброс шины данных
+						lockStart		<= 1'b1;				//сброс бита start
+						lockSend			<= 1'b1;				//сброс шины данных
+						lockReceive		<= 1'b1;				//сброс бита start
+						delayLock		<= DELAY_START;	
+				end	
+				STATE_PREPARE_SEND_3:begin					//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
+						lockDataSend	<= 1'b0;				//разрешаем шину данных
+						delayLock	<= NULL_16;		
+				end								
+//				STATE_COMMAND_SEND_4:begin
+//						lockSend			<= 1'b1;				//сброс шины данных
+//				end
+//				STATE_SEND_5:begin
+//						lockSend			<= 1'b0;
+//				end	
+//				STATE_COMMAND_GET_7:begin
+//						lockReceive			<= 1'b1;				
+//				end			
+//				STATE_GET_8:begin
+//						lockReceive		<= 1'b0;
+//				end				
+			endcase
+			
+			if(state == STATE_SEND_5) 
+				begin	
+					lockSend		<= 1'b0;
+				end
+			else
+				begin	
+					lockSend		<= 1'b1;
+				end
+				
+			if(state == STATE_GET_8) 
+				begin	
+					lockReceive	<= 1'b0;
+				end
+			else
+				begin	
+					lockReceive		<= 1'b1;
+				end
+				
+				
+			if(delayLock == DELAY_START) 	  //задержка
+				begin		
+					lockStart		<= 1'b1;	  //сброс бита start
+				end
+			else
+				begin
+					delayLock <= delayLock + 16'd1;	
+					lockStart <= 1'b0;	  //сброс бита start
+				end
+		
+		end 
+end	
 
 always@(posedge received or negedge reset )
 begin

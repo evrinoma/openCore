@@ -51,6 +51,12 @@ localparam STATE_WAIT_GEN_ACK		= 4'd13;
 localparam STATE_GEN_ACK			= 4'd14;
 localparam STATE_NO_GEN_ACK		= 4'd15;
 
+
+localparam STATE_START_PREPARE_SEND		= 4'd13;
+localparam STATE_START_SEND			= 4'd14;
+localparam STATE_START_WAIT_ACK		= 4'd15;
+localparam STATE_START_ACK		= 4'd13;
+localparam STATE_INIT_ACK			= 4'd14;
 //0.25MHz основная частота QUARTER8 - 2.5kHz HALF8 - 1.25kHz  scl период 0.4kHz
 //0.25MHz основная частота QUARTER8 - 2.5kHz HALF8 - 1.25kHz  scl период 0.625kHz
 //0.5MHz основная частота  QUARTER8 - 5kHz HALF8 - 2.5kHz  scl период 1.25kHz
@@ -129,44 +135,43 @@ begin
 			STATE_START: begin						//начальная последовательность sda = 0 scl = 1 задержка sda = 0 scl = 0 задержка
 				if (stateScl == STATE_START) 
 					begin 								//ожидаем когда закончится этап старта
-						stateSda <= STATE_PREPARE_SEND;	
+						stateSda <= STATE_START_PREPARE_SEND;	
 					end
 				zsda	<= 0;	
 			end			
-			STATE_PREPARE_SEND: begin				//осуществляем выборку данных
-				if (stateScl == STATE_PREPARE_SEND) 
+			STATE_START_PREPARE_SEND: begin				//осуществляем выборку данных
+				if (stateScl == STATE_START_PREPARE_SEND) 
 					begin 								//ожидаем когда закончится этап подготовки данных
-						stateSda <= STATE_SEND;
+						stateSda <= STATE_START_SEND;
 						count <= count - 4'd1;		//уменьшаем счетчик передачи бит 
 					end
 				if (datasend[count] == 1)			//переключаем линию sda в ноль, если отправляемый бит равен нулю
 					zsda	<= 1;	
 				else
 					zsda	<= 0;	
-//				ask	<= 1;
 			end
-			STATE_SEND: begin
-				if (stateScl == STATE_SEND) 
+			STATE_START_SEND: begin
+				if (stateScl == STATE_START_SEND) 
 					begin 											//ожидаем когда закончится этап послыки данных
 						if (count == 4'hF) 						//если мы отправили все биты с 7 по 0, то устанавливаем счетчик передачи бит на старший бит
 							begin
-								stateSda <= STATE_WAIT_ACK;	//преходим в состояние приема ответа ACK или NACK
+								stateSda <= STATE_START_WAIT_ACK;	//преходим в состояние приема ответа ACK или NACK
 								count <= 4'd7;
 								rw	<=	datasend[0];				//устанавливаем режим чтение или запись
 							end
 						else
-							stateSda <= STATE_PREPARE_SEND; //преходим в состояние подготовки данных к отправке
+							stateSda <= STATE_START_PREPARE_SEND; //преходим в состояние подготовки данных к отправке
 					end
 			end
-			STATE_WAIT_ACK: begin
-				if (stateScl == STATE_WAIT_ACK) 
+			STATE_START_WAIT_ACK: begin
+				if (stateScl == STATE_START_WAIT_ACK) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
-						stateSda <= STATE_ACK;						
+						stateSda <= STATE_START_ACK;						
 					end
 				zsda	<= 1;	
 			end
-			STATE_ACK: begin
-				if (stateScl == STATE_ACK ) 
+			STATE_INIT_ACK: begin
+				if (stateScl == STATE_INIT_ACK ) 
 					begin 				
 						if (!ask) 
 							begin									//если пришло подтвреждение от ведомого
@@ -194,7 +199,6 @@ begin
 						else																//если не пришло подтвреждение от ведомого, то заканчиваем посылку
 							stateSda <= STATE_STOP;
 						sended <= 0;													//сбрасываем сигнал уведомления о передачи порции данных
-						//count <= 4'd7;		
 					end
 				else
 					begin
@@ -207,11 +211,99 @@ begin
 							waitSend <= 1'b1;							
 						if (receive)			//фиксируем наличие высокого уровня на линии receive, дополнительная порция информации будет принята с ведомого
 							waitReceive <= 1'b1;
-
-						
 					end					
 				zsda	<= 1;			
 			end			
+			
+	
+
+
+			
+			
+			
+			STATE_WAIT_RESTART: begin
+				if (stateScl == STATE_WAIT_RESTART) 
+					begin
+						stateSda <= STATE_RESTART;
+//						isRestarted <= 1;
+					end
+				else
+					zsda	<= 1;
+			end	
+			
+			STATE_RESTART: begin
+				if (stateScl == STATE_RESTART) 
+						stateSda <= STATE_PREPARE_RECEIVE;
+				zsda	<= 0;	
+			end	
+			
+			
+			
+
+	
+			
+			
+			STATE_PREPARE_SEND: begin				//осуществляем выборку данных
+				if (stateScl == STATE_PREPARE_SEND) 
+					begin 								//ожидаем когда закончится этап подготовки данных
+						stateSda <= STATE_SEND;
+						count <= count - 4'd1;		//уменьшаем счетчик передачи бит 
+					end
+				if (datasend[count] == 1)			//переключаем линию sda в ноль, если отправляемый бит равен нулю
+					zsda	<= 1;	
+				else
+					zsda	<= 0;	
+			end
+			STATE_SEND: begin
+				if (stateScl == STATE_SEND) 
+					begin 											//ожидаем когда закончится этап послыки данных
+						if (count == 4'hF) 						//если мы отправили все биты с 7 по 0, то устанавливаем счетчик передачи бит на старший бит
+							begin
+								stateSda <= STATE_WAIT_ACK;	//преходим в состояние приема ответа ACK или NACK
+								count <= 4'd7;
+							end
+						else
+							stateSda <= STATE_PREPARE_SEND; //преходим в состояние подготовки данных к отправке
+					end
+			end
+			STATE_WAIT_ACK: begin
+				if (stateScl == STATE_WAIT_ACK) 
+					begin 										//ожидаем когда начнется этап приема данных подтверждения
+						stateSda <= STATE_ACK;						
+					end
+				zsda	<= 1;	
+			end
+			STATE_ACK: begin
+				if (stateScl == STATE_ACK ) 
+					begin 				
+						if (!ask) //если пришло подтвреждение от ведомого
+							begin									
+								//запись данных в ведомый	
+								if (waitSend) 			
+									begin	
+										waitSend <= 1'b0;						//сбрасываем сигнал передачи в ведомого новой порции данных
+										stateSda <= STATE_PREPARE_SEND;	//переходим в состояние подготовки к отправке новой порции данных
+									end
+								else
+									stateSda <= STATE_STOP;					//если пришло подтвреждение от ведомого, а посылать больше нечего, то заканчиваем отправку
+							end
+						else																//если не пришло подтвреждение от ведомого, то заканчиваем посылку
+							stateSda <= STATE_STOP;
+						sended <= 0;													//сбрасываем сигнал уведомления о передачи порции данных
+					end
+				else
+					begin
+						if (sda == 0) 			//фиксируем наличие низкого уровня на линии sda
+							ask <= 0;		
+						sended <= 1;			//выставляем сигнал уведомления о передачи порции данных - готовность устройства к принятию новой порции данных		
+						if (send)				//фиксируем наличие высокого уровея на линии send, дополнительная порция информации будет отправлена в ведомый
+							waitSend <= 1'b1;	
+					end					
+				zsda	<= 1;			
+			end
+
+
+			
 			STATE_PREPARE_RECEIVE: begin	//осуществляем считывание данных с ведомого
 				if (stateScl == STATE_PREPARE_RECEIVE) 
 					begin 						//ожидаем когда закончится этап подготовки данных ведомым
@@ -270,37 +362,14 @@ begin
 					begin 
 						stateSda <= STATE_PREPARE_RECEIVE;		//переходим в состояние подготовки к отправке новой порции данных									
 					end
-//				received	<= 0;											//сбрасываем сигнал уведомления о приема порции данных
-//				zsda	<= 0;
 			end	
 			STATE_NO_GEN_ACK: begin
 				if (stateScl == STATE_NO_GEN_ACK ) 
 					begin 
 						stateSda <= STATE_STOP;
 					end
-//				received	<= 0;											//сбрасываем сигнал уведомления о приема порции данных
-//				zsda	<= 1;
 			end	
-			
-			
-			
-			STATE_WAIT_RESTART: begin
-				if (stateScl == STATE_WAIT_RESTART) 
-					begin
-						stateSda <= STATE_RESTART;
-//						isRestarted <= 1;
-					end
-				else
-					zsda	<= 1;
-			end	
-			
-			STATE_RESTART: begin
-				if (stateScl == STATE_RESTART) 
-						stateSda <= STATE_PREPARE_RECEIVE;
-				zsda	<= 0;	
-			end	
-			
-				
+		
 			STATE_STOP: begin	
 				if (stateScl == STATE_IDLE)
 					begin
