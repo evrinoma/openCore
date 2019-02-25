@@ -301,6 +301,10 @@ begin
 					end
 				zsda	<= 1;
 			end
+			
+			
+			
+			
 			STATE_WAIT_GEN_ACK_13: begin
 				if (stateScl == STATE_WAIT_GEN_ACK_13 ) 
 					begin 
@@ -552,7 +556,7 @@ begin
 				zscl	<= 1;
 			end				
 			STATE_STOP_8: begin	
-				if (delay == HALF8+QUARTER8) 
+				if (delay == HALF8+HALF8) 
 					begin 
 						stateScl <= STATE_IDLE_0;
 						delay <= ZERO8;
