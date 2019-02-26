@@ -194,7 +194,11 @@ end
 initial 
 begin
 #0		->EVENT_GET_ID;
-#25000 $stop;
+//#25000 $stop;
+
+#45000 $stop;
+
+
 end
 	
 endmodule
