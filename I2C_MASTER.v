@@ -201,9 +201,12 @@ begin
 							stateSda <= STATE_PREPARE_SEND_21; //преходим в состояние подготовки данных к отправке
 					end
 			end
-			STATE_WAIT_GEN_ACK_32: begin
-				zsda	<= 0;
+			STATE_WAIT_GEN_ACK_32: begin				
 				received <= 1;							//выставляем сигнал уведомления о передачи порции данных - готовность устройства к принятию новой порции данных	
+				if (waitSend == 1'b1 || waitReceive ==  1'b1)
+					zsda	<= 0;
+				else
+					zsda	<= 1;
 				//внешний источник должен выставлять сигналы send или receive так как нельзя положиться на анализ бита rw
 				if (send)				//фиксируем наличие высокого уровея на линии send, дополнительная порция информации будет отправлена в ведомый
 							waitSend <= 1'b1;							
@@ -211,7 +214,7 @@ begin
 							waitReceive <= 1'b1;
 				if (stateScl == STATE_WAIT_GEN_ACK_32) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
-						stateSda <= STATE_ACK_33;
+						stateSda <= STATE_ACK_33;						
 					end
 			end			
 			STATE_WAIT_ACK_31: begin

@@ -157,7 +157,7 @@ else
 				data[17:9]	<=	{!START,ADR_ID};
 				data[26:18]	<=	{RESTART,ADR, READ};
 				state 		<= STATE_WAIT_READY_12;		//переходим в режим ожидания готовности автомата I2C
-				pData			<= 8'd1;
+				pData			<= 8'd0;
 				pCommand 	<= 2'd2;	
 			end		
 			STATE_WAIT_READY_12:begin						//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
