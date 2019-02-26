@@ -64,6 +64,9 @@ event EVENT_INIT;
 event EVENT_RESET;
 event EVENT_SW_ID;
 event EVENT_ACK;
+event EVENT_GENERATOR_SDA_DATA;	//генератор 
+event EVENT_GENERATE_ID;			//ответ ID чипа
+
 
 always
 begin
@@ -116,7 +119,7 @@ begin
 			reset = 1'b1;
 	end
 end
-	
+
 initial 
 begin
 	forever begin
@@ -127,7 +130,6 @@ begin
 			swId = 1'b1;
 	end
 end
-
 
 initial 
 begin
@@ -141,6 +143,35 @@ begin
 	end
 end
 
+	
+initial 
+begin
+	forever begin
+		@(EVENT_GENERATOR_SDA_DATA)
+			#0
+			en_sda = 1'b1;
+			repeat(8)
+			begin
+				treg_sda = data[count];
+				#500
+				count = count - 1;
+			end			
+			treg_sda = 1'b0;
+			en_sda = 1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_GENERATE_ID)
+			//генерируем ответ
+			data = 8'h55;
+			count = 7;			
+			#0		->EVENT_GENERATOR_SDA_DATA;			
+	end
+end
+
 
 initial 
 begin
@@ -150,6 +181,8 @@ begin
 #5000	->EVENT_ACK;
 #4500	->EVENT_ACK;
 #4800	->EVENT_ACK;
+#400	->EVENT_GENERATE_ID;
+
 #10000 $stop;
 end
 	

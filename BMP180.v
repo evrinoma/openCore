@@ -178,9 +178,9 @@ else
 			STATE_SEND_5:begin								//получен сигнал от местера что он хочетновую порцию данных
 					if(pCommand == 2'd0)
 						begin
-						if (pData == 8'hFF)
-								state <= STATE_IDLE_0;		//если данные не принимаются то переходим в ожидание
-						else										//если данные принимаются то переходим в режим приема данных. 
+//						if (pData == 8'hFF)
+//								state <= STATE_IDLE_0;		//если данные не принимаются то переходим в ожидание
+//						else										//если данные принимаются то переходим в режим приема данных. 
 																	//При этом от масетра придет должен прийти сигнал Sended, на который мы должны ответить сигналом прима данных
 								state <= STATE_PREPARE_AFTER_SEND_9;   	
 						end
@@ -219,7 +219,7 @@ else
 				lastReceived	<= received;	
 			end
 			STATE_GET_8:begin
-					if (pData == 8'hFF)
+					if (pData == 8'h00)
 						state <= STATE_IDLE_0;
 					else 	
 						state <= STATE_COMMAND_GET_7;
