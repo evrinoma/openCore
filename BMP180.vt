@@ -135,6 +135,8 @@ begin
 #1000 ->EVENT_SENDED;
 #1000 ->EVENT_SENDED;
 #1000 ->EVENT_RECEIVED;
+#1000 ->EVENT_RECEIVED;
+#1000 ->EVENT_RECEIVED;
 #10000 $stop;
 end
                                                    

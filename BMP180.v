@@ -38,23 +38,27 @@ localparam SEND				= 1'h1; 		//
 localparam RECEIVE			= 1'h1; 		//
 
 
-localparam STATE_IDLE_0			= 4'd0;		//состояние ожидани выбора команды
-localparam STATE_GET_ID_1			= 4'd1;
-localparam STATE_WAIT_READY_2	= 4'd2;
+localparam STATE_IDLE_0						= 6'd0;		//состояние ожидани выбора команды
+localparam STATE_GET_ID_11					= 6'd11;
+localparam STATE_WAIT_READY_12			= 6'd12;
 
-localparam STATE_PREPARE_SEND_3	= 4'd3;
-localparam STATE_COMMAND_SEND_4	= 4'd4;
-localparam STATE_SEND_5			= 4'd5;
+localparam STATE_UNLOCK_DATA_SEND_20	= 6'd20;
+localparam STATE_PREPARE_SEND_21			= 6'd21;
+localparam STATE_SEND_22					= 6'd22;
+localparam STATE_GEN_SEND_23				= 6'd23;
 
-localparam STATE_PREPARE_AFTER_SEND_6= 4'd6;
-localparam STATE_AFTER_SEND_7= 4'd7;
+localparam STATE_PREPARE_SEND_TO_GET_30= 6'd30;
+localparam STATE_SEND_TO_GET_31			= 6'd31;
+localparam STATE_GEN_RECEIVE_32			= 6'd32;
 
-localparam STATE_PREPARE_GET_8	= 4'd8;
-localparam STATE_COMMAND_GET_9	= 4'd9;
-localparam STATE_GET_10				= 4'd10;
+localparam STATE_PREPARE_GET_40			= 6'd40;
+localparam STATE_GET_41						= 6'd41;
+localparam STATE_GEN_RECEIVE_42			= 6'd42;
+localparam STATE_END_43						= 6'd43;
+
+localparam STATE_SHOW_63					= 6'd63;
 
 
-localparam STATE_SHOW			= 4'd9;
 
 
 
@@ -68,7 +72,7 @@ localparam MAX_DATA			= 8'd21;
 
 reg[26:0] 	data;
 
-reg[3:0] 	state;
+reg[5:0] 	state;
 reg[15:0]	delayFSM;
 reg[15:0]	delayStart;
 reg[2:0]		pCommand;
@@ -135,7 +139,7 @@ else
 									begin
 										if(delayFSM == DELAY_SW_ID) 							//задержка фиксирования факта удержания кнопки swId
 											begin
-												state 		<= STATE_GET_ID_1;	//переходим в режим установки передаваемых по шине I2C значений
+												state 		<= STATE_GET_ID_11;	//переходим в режим установки передаваемых по шине I2C значений
 												delayFSM 	<= NULL_16;
 												singleQuery	<= 1'b1;
 											end
@@ -148,81 +152,95 @@ else
 				lastReceived	<= 1'b0;
 				pOut				<= NULL_8;
 			end
-			STATE_GET_ID_1: begin							//собираем посылку, устанавливаем указатель передачи и устнавливаем указатель на буфер принятых данных число принимаемых байт
+			STATE_GET_ID_11: begin							//собираем посылку, устанавливаем указатель передачи и устнавливаем указатель на буфер принятых данных число принимаемых байт
 				data[8:0]	<=	{START,ADR,!READ};
 				data[17:9]	<=	{!START,ADR_ID};
 				data[26:18]	<=	{RESTART,ADR, READ};
-				state 		<= STATE_WAIT_READY_2;		//переходим в режим ожидания готовности автомата I2C
-				pData			<= 8'd0;
+				state 		<= STATE_WAIT_READY_12;		//переходим в режим ожидания готовности автомата I2C
+				pData			<= 8'd1;
 				pCommand 	<= 2'd2;	
 			end		
-			STATE_WAIT_READY_2:begin						//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
+			STATE_WAIT_READY_12:begin						//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
 				if (isReady) 
 				begin						
-					state 	<= STATE_PREPARE_SEND_3;
+					state 	<= STATE_UNLOCK_DATA_SEND_20;
 				end
 			end
-			STATE_PREPARE_SEND_3:begin						//разрешаем данные для обработки и формируем сигнал start если он задан
-					state 	<= STATE_COMMAND_SEND_4;
+			
+			STATE_UNLOCK_DATA_SEND_20,
+			STATE_GEN_SEND_23:begin			//разрешаем данные для обработки и формируем сигнал start если он задан				
+													//генерируем сигнал новой порции данных
+					state 	<= STATE_PREPARE_SEND_21;
 			end
-			STATE_COMMAND_SEND_4:begin						//дожидаемся ответа от i2c мастера что данные переданы и он готов обработать новую порцию данных
+			STATE_PREPARE_SEND_21:begin						//дожидаемся ответа от i2c мастера что данные переданы и он готов обработать новую порцию данных
 				case ({lastSended,sended})					//сравниваем состояния сигнала уведомления 
 					2'b01: begin
-								state 	<= STATE_PREPARE_SEND_3;										
+								state 	<= STATE_GEN_SEND_23;										
 								pCommand <= pCommand - 2'd1;										
 							 end
 					2'b10: begin
-								state 	<= STATE_SEND_5;																		
+								state 	<= STATE_SEND_22;																		
 							 end
 				endcase
 				lastSended <= sended;
 			end
-			STATE_SEND_5:begin								//получен сигнал от местера что он хочетновую порцию данных
+			STATE_SEND_22:begin								//получен сигнал от местера что он хочетновую порцию данных
 					if(pCommand == 2'd0)
 						begin
 							//если данные принимаются то переходим в режим приема данных. 
 							//При этом от масетра придет должен прийти сигнал Sended, на который мы должны ответить сигналом прима данных
-							state <= STATE_PREPARE_AFTER_SEND_6;   	
+							state <= STATE_PREPARE_SEND_TO_GET_30;   	
 						end
 					else 	
-						state <= STATE_PREPARE_SEND_3;
-			end			
-			STATE_PREPARE_AFTER_SEND_6:begin
-					state 	<= STATE_AFTER_SEND_7;
+						state <= STATE_UNLOCK_DATA_SEND_20;
 			end
-			STATE_AFTER_SEND_7:begin
+			
+			STATE_PREPARE_SEND_TO_GET_30,
+			STATE_GEN_RECEIVE_32:begin
+					state 	<= STATE_SEND_TO_GET_31;
+			end
+			STATE_SEND_TO_GET_31:begin
 				case ({lastSended,sended})				//сравниваем состояния сигнала уведомления 
 					2'b01: begin
-								state 	<= STATE_PREPARE_AFTER_SEND_6;	
+								state 	<= STATE_GEN_RECEIVE_32;	
 							 end
 					2'b10: begin
-								state 	<= STATE_GET_10;																		
+								state 	<= STATE_PREPARE_GET_40;																		
 							 end
 				endcase				
 				lastSended <= sended;	
-			end			
-			STATE_PREPARE_GET_8:begin
-					state 	<= STATE_COMMAND_GET_9;
 			end
-			STATE_COMMAND_GET_9:begin
+	
+	
+			STATE_PREPARE_GET_40,
+			STATE_GEN_RECEIVE_42:begin
+					state 	<= STATE_GET_41;
+			end		
+			STATE_GET_41:begin
 				case ({lastReceived,received})				//сравниваем состояния сигнала уведомления 
 					2'b01: begin
-								state 	<= STATE_PREPARE_GET_8;	
-								pData <= pData - 8'd1;								
+								if (pData == 8'h00)
+										state <= STATE_PREPARE_GET_40;
+								else 
+									begin
+										state <= STATE_GEN_RECEIVE_42;	
+										pData <= pData - 8'd1;	
+									end
 							 end
 					2'b10: begin
-								state 	<= STATE_GET_10;																		
+								state 	<= STATE_END_43;																		
 							 end
 				endcase				
 				lastReceived	<= received;	
 			end
-			STATE_GET_10:begin
+			STATE_END_43:begin
 					if (pData == 8'h00)
 						state <= STATE_IDLE_0;
 					else 	
-						state <= STATE_COMMAND_GET_9;
+						state <= STATE_GET_41;
 			end
-			STATE_SHOW: begin
+			
+			STATE_SHOW_63: begin
 				if (!swShow) 
 					begin
 						if(delayFSM == DELAY_SW_SHOW) 
@@ -267,14 +285,15 @@ begin
 						lockSend			<= 1'b1;				//сброс шины данных
 						lockReceive		<= 1'b1;				//сброс бита start
 						delayStart		<= DELAY_START;	
-				end	
-				STATE_PREPARE_SEND_3:begin					//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
+				end
+				STATE_GEN_SEND_23,
+				STATE_UNLOCK_DATA_SEND_20:begin			//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
 						lockDataSend	<= 1'b0;				//разрешаем шину данных
 						delayStart	<= NULL_16;		
 				end									
 			endcase
 			
-			if(state == STATE_SEND_5) 
+			if(state == STATE_GEN_SEND_23) 
 				begin	
 					lockSend		<= 1'b0;
 				end
@@ -283,13 +302,13 @@ begin
 					lockSend		<= 1'b1;
 				end
 				
-			if(state == STATE_GET_10 ) 
+			if(state == STATE_GEN_RECEIVE_32 || state == STATE_GEN_RECEIVE_42) 
 				begin	
 					lockReceive	<= 1'b0;
 				end
 			else
 				begin	
-					lockReceive		<= 1'b1;
+					lockReceive	<= 1'b1;
 				end
 				
 				

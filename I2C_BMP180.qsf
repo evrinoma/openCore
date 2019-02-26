@@ -109,11 +109,11 @@ set_global_assignment -name VERILOG_FILE WaitCount.v
 set_global_assignment -name BDF_FILE SINGLE_GENERATOR_SHM.bdf
 set_global_assignment -name VERILOG_FILE MY_NOT.v
 set_global_assignment -name VERILOG_FILE CLK_DIV.v
+set_instance_assignment -name IO_STANDARD "2.5 V" -to clk
+set_instance_assignment -name IO_STANDARD "2.5 V" -to out
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_instance_assignment -name IO_STANDARD "2.5 V" -to clk
-set_instance_assignment -name IO_STANDARD "2.5 V" -to out
 set_global_assignment -name EDA_TEST_BENCH_FILE I2C_BMP180.vt -section_id I2C_BMP180
 set_global_assignment -name EDA_TEST_BENCH_FILE SINGLE_GENERATOR.vt -section_id SINGLE_GENERATOR
 set_global_assignment -name EDA_TEST_BENCH_FILE BMP180_LOW_PACK.vt -section_id BMP180_LOW_PACK

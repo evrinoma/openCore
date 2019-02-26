@@ -152,13 +152,14 @@ begin
 		@(EVENT_GENERATOR_SDA_DATA)
 			#0
 			en_sda = 1'b1;
-			repeat(8)
-			begin
+			repeat(7)
+			begin				
 				treg_sda = data[count];
 				#500
-				count = count - 1;
-			end			
-			treg_sda = 1'b0;
+				count = count - 1;								
+			end
+			treg_sda = data[count];
+			#450							
 			en_sda = 1'b0;
 	end
 end
