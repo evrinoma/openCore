@@ -46,11 +46,13 @@ localparam STATE_PREPARE_SEND_3	= 4'd3;
 localparam STATE_COMMAND_SEND_4	= 4'd4;
 localparam STATE_SEND_5			= 4'd5;
 
-localparam STATE_PREPARE_GET_6	= 4'd6;
-localparam STATE_COMMAND_GET_7	= 4'd7;
-localparam STATE_GET_8				= 4'd8;
-localparam STATE_PREPARE_AFTER_SEND_9= 4'd9;
-localparam STATE_AFTER_SEND_10= 4'd10;
+localparam STATE_PREPARE_AFTER_SEND_6= 4'd6;
+localparam STATE_AFTER_SEND_7= 4'd7;
+
+localparam STATE_PREPARE_GET_8	= 4'd8;
+localparam STATE_COMMAND_GET_9	= 4'd9;
+localparam STATE_GET_10				= 4'd10;
+
 
 localparam STATE_SHOW			= 4'd9;
 
@@ -178,51 +180,47 @@ else
 			STATE_SEND_5:begin								//получен сигнал от местера что он хочетновую порцию данных
 					if(pCommand == 2'd0)
 						begin
-//						if (pData == 8'hFF)
-//								state <= STATE_IDLE_0;		//если данные не принимаются то переходим в ожидание
-//						else										//если данные принимаются то переходим в режим приема данных. 
-																	//При этом от масетра придет должен прийти сигнал Sended, на который мы должны ответить сигналом прима данных
-								state <= STATE_PREPARE_AFTER_SEND_9;   	
+							//если данные принимаются то переходим в режим приема данных. 
+							//При этом от масетра придет должен прийти сигнал Sended, на который мы должны ответить сигналом прима данных
+							state <= STATE_PREPARE_AFTER_SEND_6;   	
 						end
 					else 	
 						state <= STATE_PREPARE_SEND_3;
+			end			
+			STATE_PREPARE_AFTER_SEND_6:begin
+					state 	<= STATE_AFTER_SEND_7;
 			end
-			
-			STATE_PREPARE_AFTER_SEND_9:begin
-					state 	<= STATE_AFTER_SEND_10;
-			end
-			STATE_AFTER_SEND_10:begin
+			STATE_AFTER_SEND_7:begin
 				case ({lastSended,sended})				//сравниваем состояния сигнала уведомления 
 					2'b01: begin
-								state 	<= STATE_PREPARE_AFTER_SEND_9;	
+								state 	<= STATE_PREPARE_AFTER_SEND_6;	
 							 end
 					2'b10: begin
-								state 	<= STATE_GET_8;																		
+								state 	<= STATE_GET_10;																		
 							 end
 				endcase				
 				lastSended <= sended;	
+			end			
+			STATE_PREPARE_GET_8:begin
+					state 	<= STATE_COMMAND_GET_9;
 			end
-			
-			STATE_PREPARE_GET_6:begin
-					state 	<= STATE_COMMAND_GET_7;
-			end
-			STATE_COMMAND_GET_7:begin
+			STATE_COMMAND_GET_9:begin
 				case ({lastReceived,received})				//сравниваем состояния сигнала уведомления 
 					2'b01: begin
-								state 	<= STATE_PREPARE_GET_6;	
+								state 	<= STATE_PREPARE_GET_8;	
 								pData <= pData - 8'd1;								
 							 end
 					2'b10: begin
-								state 	<= STATE_GET_8;																		
+								state 	<= STATE_GET_10;																		
 							 end
 				endcase				
 				lastReceived	<= received;	
 			end
-			STATE_GET_8:begin
+			STATE_GET_10:begin
 					if (pData == 8'h00)
 						state <= STATE_IDLE_0;
 					else 	
-						state <= STATE_COMMAND_GET_7;
+						state <= STATE_COMMAND_GET_9;
 			end
 			STATE_SHOW: begin
 				if (!swShow) 
@@ -231,11 +229,11 @@ else
 							begin
 								if (pOut==MAX_DATA)
 									begin
-									state 		<= STATE_IDLE_0;
+										state 	<= STATE_IDLE_0;
 									end
 								else	
 									begin
-										pOut <= pOut + 8'd1;
+										pOut 		<= pOut + 8'd1;
 										delayFSM <= NULL_16;
 									end
 							end
@@ -285,7 +283,7 @@ begin
 					lockSend		<= 1'b1;
 				end
 				
-			if(state == STATE_GET_8 ) 
+			if(state == STATE_GET_10 ) 
 				begin	
 					lockReceive	<= 1'b0;
 				end
