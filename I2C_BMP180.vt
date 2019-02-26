@@ -59,6 +59,7 @@ I2C_BMP180 ENTITY (
 	.swTemp(swTemp)
 );
 
+event EVENT_GET_ID;					//цикл тестирования - получить ID чипа 
 
 event EVENT_INIT;
 event EVENT_RESET;
@@ -66,6 +67,7 @@ event EVENT_SW_ID;
 event EVENT_ACK;
 event EVENT_GENERATOR_SDA_DATA;	//генератор 
 event EVENT_GENERATE_ID;			//ответ ID чипа
+
 
 
 always
@@ -173,17 +175,26 @@ begin
 end
 
 
+
 initial 
 begin
-#0		->EVENT_INIT;
-#500	->EVENT_RESET;
-#1500	->EVENT_SW_ID;
-#5000	->EVENT_ACK;
-#4500	->EVENT_ACK;
-#4800	->EVENT_ACK;
-#400	->EVENT_GENERATE_ID;
+	forever begin
+		@(EVENT_GET_ID)
+			#0		->EVENT_INIT;
+			#500	->EVENT_RESET;
+			#1500	->EVENT_SW_ID;
+			#5000	->EVENT_ACK;
+			#4500	->EVENT_ACK;
+			#4800	->EVENT_ACK;
+			#400	->EVENT_GENERATE_ID;		
+	end
+end
 
-#10000 $stop;
+
+initial 
+begin
+#0		->EVENT_GET_ID;
+#25000 $stop;
 end
 	
 endmodule
