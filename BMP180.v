@@ -49,6 +49,8 @@ localparam STATE_SEND_5			= 4'd5;
 localparam STATE_PREPARE_GET_6	= 4'd6;
 localparam STATE_COMMAND_GET_7	= 4'd7;
 localparam STATE_GET_8				= 4'd8;
+localparam STATE_PREPARE_AFTER_SEND_9= 4'd9;
+localparam STATE_AFTER_SEND_10= 4'd10;
 
 localparam STATE_SHOW			= 4'd9;
 
@@ -162,28 +164,45 @@ else
 					state 	<= STATE_COMMAND_SEND_4;
 			end
 			STATE_COMMAND_SEND_4:begin						//дожидаемся ответа от i2c мастера что данные переданы и он готов обработать новую порцию данных
-						case ({lastSended,sended})			//сравниваем состояния сигнала уведомления 
-							2'b01: begin
-										state 	<= STATE_PREPARE_SEND_3;										
-										pCommand <= pCommand - 2'd1;										
-									 end
-							2'b10: begin
-										state 	<= STATE_SEND_5;																		
-									 end
-						endcase
+				case ({lastSended,sended})					//сравниваем состояния сигнала уведомления 
+					2'b01: begin
+								state 	<= STATE_PREPARE_SEND_3;										
+								pCommand <= pCommand - 2'd1;										
+							 end
+					2'b10: begin
+								state 	<= STATE_SEND_5;																		
+							 end
+				endcase
 				lastSended <= sended;
 			end
-			STATE_SEND_5:begin								//получен сгнал от местера что он хочетновую порцию данных
+			STATE_SEND_5:begin								//получен сигнал от местера что он хочетновую порцию данных
 					if(pCommand == 2'd0)
 						begin
 						if (pData == 8'hFF)
-								state <= STATE_IDLE_0;				//если данные не принимаются то переходим в ожидание
-						else
-								state <= STATE_PREPARE_GET_6;   	//если данные принимаются то переходим в режим приема данных
+								state <= STATE_IDLE_0;		//если данные не принимаются то переходим в ожидание
+						else										//если данные принимаются то переходим в режим приема данных. 
+																	//При этом от масетра придет должен прийти сигнал Sended, на который мы должны ответить сигналом прима данных
+								state <= STATE_PREPARE_AFTER_SEND_9;   	
 						end
 					else 	
-						state <= STATE_COMMAND_SEND_4;
+						state <= STATE_PREPARE_SEND_3;
 			end
+			
+			STATE_PREPARE_AFTER_SEND_9:begin
+					state 	<= STATE_AFTER_SEND_10;
+			end
+			STATE_AFTER_SEND_10:begin
+				case ({lastSended,sended})				//сравниваем состояния сигнала уведомления 
+					2'b01: begin
+								state 	<= STATE_PREPARE_AFTER_SEND_9;	
+							 end
+					2'b10: begin
+								state 	<= STATE_GET_8;																		
+							 end
+				endcase				
+				lastSended <= sended;	
+			end
+			
 			STATE_PREPARE_GET_6:begin
 					state 	<= STATE_COMMAND_GET_7;
 			end
@@ -266,7 +285,7 @@ begin
 					lockSend		<= 1'b1;
 				end
 				
-			if(state == STATE_GET_8) 
+			if(state == STATE_GET_8 ) 
 				begin	
 					lockReceive	<= 1'b0;
 				end

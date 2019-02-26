@@ -39,7 +39,7 @@
 
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE6E22C8
-set_global_assignment -name TOP_LEVEL_ENTITY I2C_BMP180
+set_global_assignment -name TOP_LEVEL_ENTITY BMP180
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 15.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:50:46  APRIL 26, 2016"
 set_global_assignment -name LAST_QUARTUS_VERSION "17.0.0 Standard Edition"
@@ -56,7 +56,7 @@ set_global_assignment -name ENABLE_OCT_DONE OFF
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED WITH WEAK PULL-UP"
 set_global_assignment -name EDA_TEST_BENCH_ENABLE_STATUS TEST_BENCH_MODE -section_id eda_simulation
-set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH I2C_BMP180 -section_id eda_simulation
+set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH BMP180 -section_id eda_simulation
 set_global_assignment -name DEVICE_FILTER_PACKAGE TQFP
 set_global_assignment -name DEVICE_FILTER_PIN_COUNT 144
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
@@ -109,11 +109,11 @@ set_global_assignment -name VERILOG_FILE WaitCount.v
 set_global_assignment -name BDF_FILE SINGLE_GENERATOR_SHM.bdf
 set_global_assignment -name VERILOG_FILE MY_NOT.v
 set_global_assignment -name VERILOG_FILE CLK_DIV.v
+set_instance_assignment -name IO_STANDARD "2.5 V" -to clk
+set_instance_assignment -name IO_STANDARD "2.5 V" -to out
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_instance_assignment -name IO_STANDARD "2.5 V" -to clk
-set_instance_assignment -name IO_STANDARD "2.5 V" -to out
 set_global_assignment -name EDA_TEST_BENCH_FILE I2C_BMP180.vt -section_id I2C_BMP180
 set_global_assignment -name EDA_TEST_BENCH_FILE SINGLE_GENERATOR.vt -section_id SINGLE_GENERATOR
 set_global_assignment -name EDA_TEST_BENCH_FILE BMP180_LOW_PACK.vt -section_id BMP180_LOW_PACK

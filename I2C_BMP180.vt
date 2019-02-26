@@ -149,6 +149,7 @@ begin
 #1500	->EVENT_SW_ID;
 #5000	->EVENT_ACK;
 #4500	->EVENT_ACK;
+#4800	->EVENT_ACK;
 #10000 $stop;
 end
 	
