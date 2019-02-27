@@ -1,4 +1,4 @@
-module I2C_MASTER(clk, reset, start, ready, sda, scl, send, datasend, sended, receive, datareceive, received, state);
+module I2C_MASTER(clk, reset, start, ready, sda, scl, send, datasend, sended, receive, datareceive, received, state,stateStart);
 input wire clk;					//сигнал тактовой частоты
 input wire reset;					//сигнал сброса
 input wire start;					//запустить транзакцию
@@ -29,7 +29,7 @@ reg[7:0]	delay;					//делитель входной частоты
 
 reg[5:0] stateSda;				//состояние линии sda
 reg[5:0] stateScl;				//состояние линии scl
-reg	   stateStart;				//состояние перехода в режим start илии restart
+output reg	   stateStart;				//состояние перехода в режим start илии restart
 
 reg receivedBit; 
 reg lockReceived	= 1'b0;

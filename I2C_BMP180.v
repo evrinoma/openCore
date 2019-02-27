@@ -10,7 +10,8 @@ out,
 ready, 
 scl, 
 sda,
-state
+state,
+stateStart
 );
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
@@ -33,6 +34,7 @@ inout 	scl;							//сигнал тактирования I2C
 wire [7:0] datareceive;
 wire [7:0] datasend;
 output wire[5:0] state;
+output wire stateStart;
 output wire receive;
 output wire received;
 output wire send;
@@ -52,7 +54,8 @@ I2C_MASTER I2C_MASTER(
 .receive(receive), 
 .datareceive(datareceive), 
 .received(received), 
-.state(state)
+.state(state),
+.stateStart(stateStart)
 );
 
 // assign statements (if any)                          
