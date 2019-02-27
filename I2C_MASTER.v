@@ -29,15 +29,14 @@ reg[7:0]	delay;					//делитель входной частоты
 
 reg[5:0] stateSda;				//состояние линии sda
 reg[5:0] stateScl;				//состояние линии scl
-reg[1:0] stateStart;				//состояние перехода в режим start илии restart
+reg	   stateStart;				//состояние перехода в режим start илии restart
 
 reg receivedBit; 
 reg lockReceived	= 1'b0;
 reg lockSended		= 1'b0;
 
-localparam START_IDLE_0	= 2'd0;
-localparam START_1		= 2'd1;
-localparam RESTART_2		= 2'd2;
+localparam START_IDLE_0	= 1'b0;
+localparam START_1		= 1'b1;
 
 
 //состояния
@@ -150,7 +149,7 @@ begin
 					end
 				zsda	<= 1'b1;								//линия sda в состоянии z
 				count <= 4'd7;							//счетчик передачи бит указывает на старший бит, так с него начинаем передачу данных
-				rw		<= 1'b0;								//поумолчанию записываем в устройство
+//				rw		<= 1'b0;								//поумолчанию записываем в устройство
 				ask	<= 1'b1;								//сбрасываем бит подтвержедния приема данных ведомым
 				
 				lockSended		<= 1'b0;								//сбрасываем сигнал уведомелния о передачи порции данных
@@ -225,7 +224,7 @@ begin
 				if (stateScl == STATE_WAIT_GEN_ACK_32) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
 						stateSda <= STATE_ACK_33;	
-												
+						ask	<= 1'b1;							
 					end
 			end	
 			STATE_WAIT_ACK_31: begin
@@ -239,6 +238,7 @@ begin
 				if (stateScl == STATE_WAIT_ACK_31) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
 						stateSda <= STATE_ACK_33;
+						ask	<= 1'b1;	
 					end
 			end
 			//Clock stretching

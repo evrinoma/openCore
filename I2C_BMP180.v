@@ -37,6 +37,7 @@ output wire receive;
 output wire received;
 output wire send;
 output wire sended;
+wire start;
 
 I2C_MASTER I2C_MASTER(
 .clk(clk), 

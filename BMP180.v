@@ -83,8 +83,6 @@ reg 			lastSended;
 reg 			lastReceived;
 reg 			singleQuery;				//одиночное срабатывание автомата
 
-wire			read;
-
 integer i;
 
 reg 			lockDataSend;
@@ -107,7 +105,6 @@ assign start    = !lockStart    ? ( (pCommand==2) ? data[8]   : (pCommand==1) ? 
 assign send 	=  !lockSend 		? SEND 		: !SEND;
 assign receive =  !lockReceive 	? RECEIVE 	: !RECEIVE;
 
-assign read = datasend[0];
 assign out = (pOut <= MAX_DATA)? Data[pOut]: NULL_8;
 
 
