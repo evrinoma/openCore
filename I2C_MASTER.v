@@ -1,8 +1,9 @@
-module I2C_MASTER(clk, reset, start, ready, sda, scl, send, datasend, sended, receive, datareceive, received);
+module I2C_MASTER(clk, reset, start, ready, sda, scl, send, datasend, sended, receive, datareceive, received, state);
 input wire clk;					//сигнал тактовой частоты
 input wire reset;					//сигнал сброса
 input wire start;					//запустить транзакцию
 output wire ready;				//готовность контроллера I2C
+output wire[5:0] state;
 
 inout sda;							//линия передачи данных I2C 
 inout scl;							//сигнал тактирования I2C
@@ -29,6 +30,8 @@ reg[7:0]	delay;					//делитель входной частоты
 reg[5:0] stateSda;				//состояние линии sda
 reg[5:0] stateScl;				//состояние линии scl
 reg[1:0] stateStart;				//состояние перехода в режим start илии restart
+
+reg receivedBit; 
 
 localparam START_IDLE_0	= 2'd0;
 localparam START_1		= 2'd1;
@@ -88,6 +91,7 @@ assign sda = (zsda) ? 1'bz : 0;// 1'bz монтажное И поэтому ту
 assign scl = (zscl) ? 1'bz : 0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 assign ready = (stateSda == STATE_IDLE_0) ? 1 : 0;
 
+assign state = stateSda;
 
 always@(posedge clk)
 begin
@@ -126,6 +130,8 @@ begin
 			received<= 0;
 			waitSend<= 1'b0;
 			waitReceive<= 1'b0;
+			
+			receivedBit<= 1;
 		end
 	else
 		begin
@@ -147,7 +153,8 @@ begin
 				sended<= 0;								//сбрасываем сигнал уведомелния о передачи порции данных
 				received<= 0;							//сбрасываем сигнал уведомления о приеме порции данных
 				waitSend<= 1'b0;						//сбрасываем сигнал передачи в ведомого новой порции данных
-				waitReceive<= 1'b0;					//сбрасываем сигнал приема с ведомого новой порции данных			
+				waitReceive<= 1'b0;					//сбрасываем сигнал приема с ведомого новой порции данных	
+				receivedBit<= 1;		
 			end
 			STATE_START_11: begin						//начальная последовательность sda = 0 scl = 1 задержка sda = 0 scl = 0 задержка
 				if (stateScl == STATE_START_11) 
@@ -176,7 +183,7 @@ begin
 				sended<= 0;								//сбрасываем сигнал уведомелния о передачи порции данных
 				received<= 0;							//сбрасываем сигнал уведомления о приеме порции данных  
 			end    		
-			STATE_PREPARE_SEND_21: begin	//осуществляем выборку данных
+			STATE_PREPARE_SEND_21: begin			//осуществляем выборку данных
 				if (stateScl == STATE_PREPARE_SEND_21) 
 					begin 								//ожидаем когда закончится этап подготовки данных
 						stateSda <= STATE_SEND_22;
@@ -201,35 +208,37 @@ begin
 							stateSda <= STATE_PREPARE_SEND_21; //преходим в состояние подготовки данных к отправке
 					end
 			end
-			STATE_WAIT_GEN_ACK_32: begin				
-				received <= 1;							//выставляем сигнал уведомления о передачи порции данных - готовность устройства к принятию новой порции данных	
+			STATE_WAIT_GEN_ACK_32: begin
 				if (waitSend == 1'b1 || waitReceive ==  1'b1)
-					zsda	<= 0;
+						zsda	<= 0;
 				else
-					zsda	<= 1;
+						zsda	<= 1;	
+				received <= 1;									//выставляем сигнал уведомления о передачи порции данных - готовность устройства к принятию новой порции данных	
 				//внешний источник должен выставлять сигналы send или receive так как нельзя положиться на анализ бита rw
-				if (send)				//фиксируем наличие высокого уровея на линии send, дополнительная порция информации будет отправлена в ведомый
-							waitSend <= 1'b1;							
-				if (receive)			//фиксируем наличие высокого уровня на линии receive, дополнительная порция информации будет принята с ведомого
-							waitReceive <= 1'b1;
+				if (send)										//фиксируем наличие высокого уровея на линии send, дополнительная порция информации будет отправлена в ведомый
+						waitSend <= 1'b1;							
+				if (receive)									//фиксируем наличие высокого уровня на линии receive, дополнительная порция информации будет принята с ведомого
+						waitReceive <= 1'b1;
 				if (stateScl == STATE_WAIT_GEN_ACK_32) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
-						stateSda <= STATE_ACK_33;						
+						stateSda <= STATE_ACK_33;	
+												
 					end
-			end			
+			end	
 			STATE_WAIT_ACK_31: begin
 				zsda	<= 1;
-				sended <= 1;							//выставляем сигнал уведомления о передачи порции данных - готовность устройства к принятию новой порции данных	
+				sended <= 1;									//выставляем сигнал уведомления о передачи порции данных - готовность устройства к принятию новой порции данных	
 				//внешний источник должен выставлять сигналы send или receive так как нельзя положиться на анализ бита rw
-				if (send)				//фиксируем наличие высокого уровея на линии send, дополнительная порция информации будет отправлена в ведомый
-							waitSend <= 1'b1;							
-				if (receive)			//фиксируем наличие высокого уровня на линии receive, дополнительная порция информации будет принята с ведомого
-							waitReceive <= 1'b1;
+				if (send)										//фиксируем наличие высокого уровея на линии send, дополнительная порция информации будет отправлена в ведомый
+						waitSend <= 1'b1;							
+				if (receive)									//фиксируем наличие высокого уровня на линии receive, дополнительная порция информации будет принята с ведомого
+						waitReceive <= 1'b1;
 				if (stateScl == STATE_WAIT_ACK_31) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
 						stateSda <= STATE_ACK_33;
 					end
 			end
+			//Clock stretching
 			STATE_ACK_33: begin
 				if (stateScl == STATE_ACK_33) 
 					begin 				
@@ -274,13 +283,12 @@ begin
 					
 				sended<= 0;								//сбрасываем сигнал уведомелния о передачи порции данных
 				received<= 0;							//сбрасываем сигнал уведомления о приеме порции данных
-				//zsda	<= 1;			
 			end 
 			STATE_PREPARE_RECEIVE_41: begin	//осуществляем считывание данных с ведомого
 				if (stateScl == STATE_PREPARE_RECEIVE_41) 
 					begin 						//ожидаем когда закончится этап подготовки данных ведомым
 						stateSda <= STATE_RECEIVE_42;
-						datareceive[count] <= 1;	
+						receivedBit<= 1;
 					end
 				zsda	<= 1;
 			end			
@@ -299,10 +307,11 @@ begin
 								stateSda <= STATE_PREPARE_RECEIVE_41;
 								count <= count - 4'd1;
 							end
+						datareceive[count] <= receivedBit;
 					end
 				if (sda == 0) 							//фиксируем наличие низкого уровня на линии sda - сохраняем значение принятого бита
 					begin
-						datareceive[count] <= 0;
+						receivedBit<= 0;
 					end
 				zsda	<= 1;
 			end		
@@ -332,7 +341,8 @@ begin
 				zscl	<= 1;
 				stateScl <= STATE_IDLE_0;
 				delay <= ZERO8;
-			end
+			end			
+			
 			STATE_START_11: begin		
 				if (delay == HALF8+QUARTER8) 
 					begin //частота работы 100кГц берем интервал и просаживаем scl в ноль
@@ -345,57 +355,7 @@ begin
 					zscl	<= 1;
 				else
 					zscl	<= 0;
-			end				
-			STATE_PREPARE_SEND_21: begin
-				if (delay == HALF8)
-					begin 
-						stateScl <= STATE_PREPARE_SEND_21;
-						delay <= ZERO8;
-					end
-				else
-					delay <= delay + ONE8;
-				zscl	<= 0;
-			end		
-			STATE_SEND_22: begin		
-				if (delay == HALF8) 
-					begin 
-						stateScl <= STATE_SEND_22;
-						delay <= ZERO8;
-					end
-				else
-					delay <= delay + ONE8;
-				zscl	<= 1;
-			end
-			STATE_WAIT_GEN_ACK_32: begin		
-				if (delay == HALF8) 
-					begin 
-						stateScl <= STATE_WAIT_GEN_ACK_32;
-						delay <= ZERO8;
-					end
-				else
-					delay <= delay + ONE8;
-				zscl	<= 0;
-			end
-			STATE_WAIT_ACK_31: begin
-				if (delay == HALF8) 
-					begin 
-						stateScl <= STATE_WAIT_ACK_31;
-						delay <= ZERO8;
-					end
-				else
-					delay <= delay + ONE8;
-				zscl	<= 0;
-			end			
-			STATE_ACK_33: begin
-				if (delay == HALF8) 
-					begin 
-						stateScl <= STATE_ACK_33;
-						delay <= ZERO8;
-					end
-				else
-					delay <= delay + ONE8;
-				zscl	<= 1;		
-			end			
+			end	
 			STATE_WAIT_RESTART_12: begin
 				if (delay == HALF8) 
 					begin 
@@ -421,28 +381,7 @@ begin
 					zscl	<= 1;
 				else
 					zscl	<= 0;
-			end			
-			STATE_PREPARE_RECEIVE_41: begin
-				if (delay == HALF8)
-					begin 
-						stateScl <= STATE_PREPARE_RECEIVE_41;
-						delay <= ZERO8;
-					end
-				else
-					delay <= delay + ONE8;	
-				zscl	<= 0;
-			end		
-			STATE_RECEIVE_42: begin		
-				if (delay == HALF8) 
-					begin 
-						stateScl <= STATE_RECEIVE_42;
-						delay <= ZERO8;
-					end
-				else
-					delay <= delay + ONE8;
-				zscl	<= 1;
 			end
-			
 			STATE_STOP_63: begin	
 				if (delay == HALF8+HALF8) 
 					begin 
@@ -456,6 +395,80 @@ begin
 				else
 					zscl	<= 1;
 			end
+			
+			
+			STATE_PREPARE_SEND_21: begin
+				if (delay == HALF8)
+					begin 
+						stateScl <= STATE_PREPARE_SEND_21;
+						delay <= ZERO8;
+					end
+				else
+					delay <= delay + ONE8;
+				zscl	<= 0;
+			end	
+			STATE_WAIT_GEN_ACK_32: begin		
+				if (delay == HALF8) 
+					begin 
+						stateScl <= STATE_WAIT_GEN_ACK_32;
+						delay <= ZERO8;
+					end
+				else
+					delay <= delay + ONE8;
+				zscl	<= 0;
+			end
+			STATE_WAIT_ACK_31: begin
+				if (delay == HALF8) 
+					begin 
+						stateScl <= STATE_WAIT_ACK_31;
+						delay <= ZERO8;
+					end
+				else
+					delay <= delay + ONE8;
+				zscl	<= 0;
+			end
+			STATE_PREPARE_RECEIVE_41: begin
+				if (delay == HALF8)
+					begin 
+						stateScl <= STATE_PREPARE_RECEIVE_41;
+						delay <= ZERO8;
+					end
+				else
+					delay <= delay + ONE8;	
+				zscl	<= 0;
+			end	
+			
+			STATE_SEND_22: begin		
+				if (delay == HALF8) 
+					begin 
+						stateScl <= STATE_SEND_22;
+						delay <= ZERO8;
+					end
+				else
+					delay <= delay + ONE8;
+				zscl	<= 1;
+			end				
+			STATE_ACK_33: begin
+				if (delay == HALF8) 
+					begin 
+						stateScl <= STATE_ACK_33;
+						delay <= ZERO8;
+					end
+				else
+					delay <= delay + ONE8;
+				zscl	<= 1;		
+			end
+			STATE_RECEIVE_42: begin		
+				if (delay == HALF8) 
+					begin 
+						stateScl <= STATE_RECEIVE_42;
+						delay <= ZERO8;
+					end
+				else
+					delay <= delay + ONE8;
+				zscl	<= 1;
+			end
+			
 			endcase
 		end
 end

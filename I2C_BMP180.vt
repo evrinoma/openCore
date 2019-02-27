@@ -17,6 +17,7 @@ reg swShow;
 
 // wires                                               
 wire [7:0]  out;
+wire [5:0]  state;
 wire ready;
 wire scl;
 wire sda;
@@ -25,7 +26,6 @@ wire receive;
 wire received;
 wire send;
 wire sended;
-wire start;
 
 reg en_scl;
 reg en_sda;
@@ -38,25 +38,24 @@ assign scl = (en_scl) ? treg_scl : 1'bZ;
 assign sda = (en_sda) ? treg_sda : 1'bZ;
 
 I2C_BMP180 ENTITY (
-// port map - connection between master ports and signals/registers   
-	.receive(receive),
-	.received(received),
-	.send(send),
-	.sended(sended),
-	.start(start),
-	.clk(clk),
-	.out(out),
-	.ready(ready),
-	.reset(reset),
-	.scl(scl),
-	.sda(sda),
-	.swGPress(swGPress),
-	.swGTemp(swGTemp),
-	.swId(swId),
-	.swPress(swPress),
-	.swSettings(swSettings),
-	.swShow(swShow),
-	.swTemp(swTemp)
+.receive(receive),
+.received(received),
+.send(send),
+.sended(sended),
+.swId(swId),
+.swSettings(swSettings),
+.swTemp(swTemp),
+.swPress(swPress),
+.swGTemp(swGTemp),
+.swGPress(swGPress),
+.swShow(swShow),
+.clk(clk), 
+.reset(reset),
+.out(out),
+.ready(ready), 
+.scl(scl),
+.sda(sda),
+.state(state)
 );
 
 event EVENT_GET_ID;					//цикл тестирования - получить ID чипа 

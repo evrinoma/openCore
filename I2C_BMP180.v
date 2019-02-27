@@ -3,14 +3,14 @@ receive,
 received,
 send,
 sended,
-start,
 swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
 clk, 
 reset, 
 out, 
 ready, 
 scl, 
-sda
+sda,
+state
 );
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
@@ -32,28 +32,27 @@ inout 	scl;							//сигнал тактирования I2C
 
 wire [7:0] datareceive;
 wire [7:0] datasend;
+output wire[5:0] state;
 output wire receive;
 output wire received;
 output wire send;
 output wire sended;
-output wire start;
 
-I2C_MASTER I2C_MASTER (
-// port map - connection between master ports and signals/registers   
-	.clk(clk), //
-	.datareceive(out), //out
-	.datasend(datasend), //datasend
-	.ready(ready), //
-	.receive(receive),
-	.received(received),
-	.reset(reset), //
-	.scl(scl), //
-	.sda(sda), //
-	.send(send),
-	.sended(sended),
-	.start(start)
+I2C_MASTER I2C_MASTER(
+.clk(clk), 
+.reset(reset), 
+.start(start), 
+.ready(ready), 
+.sda(sda), 
+.scl(scl), 
+.send(send), 
+.datasend(datasend), 
+.sended(sended), 
+.receive(receive), 
+.datareceive(datareceive), 
+.received(received), 
+.state(state)
 );
-
 
 // assign statements (if any)                          
 BMP180 BMP180 (
