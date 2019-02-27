@@ -125,8 +125,8 @@ if (!reset)
 		pCommand 		<= 2'd2;			
 		pData				<= NULL_8;	
 		
-		delayFSM 			<= NULL_16;
-		data				<= 23'd0;
+		delayFSM 		<= NULL_16;
+		data				<= 26'd0;
 		pOut				<= NULL_8;
 	end
 else
@@ -148,7 +148,7 @@ else
 									end
 							end	
 				endcase
-				lastSended	<= 1'b0;
+				lastSended		<= 1'b0;
 				lastReceived	<= 1'b0;
 				pOut				<= NULL_8;
 			end
@@ -314,12 +314,12 @@ begin
 				
 			if(delayStart == DELAY_START) 	  //задержка
 				begin		
-					lockStart		<= 1'b1;	  //сброс бита start
+					lockStart	<= 1'b1;	  //сброс бита start
 				end
 			else
 				begin
 					delayStart <= delayStart + 16'd1;	
-					lockStart <= 1'b0;	  //сброс бита start
+					lockStart 	<= 1'b0;	  //сброс бита start
 				end
 		
 		end 
