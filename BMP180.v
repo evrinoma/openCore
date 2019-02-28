@@ -1,6 +1,6 @@
 module BMP180(swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
 isReady,
-clk, reset, start, send, datasend, sended, receive, datareceive, received, out);
+clk, reset, start, send, datasend, sended, receive, datareceive, received, out, state);
 
 input		wire clk;
 
@@ -37,7 +37,6 @@ localparam RESTART			= 1'h1; 		//режим рестарт для i2c масте
 localparam SEND				= 1'h1; 		//
 localparam RECEIVE			= 1'h1; 		//
 
-
 localparam STATE_IDLE_0						= 6'd0;		//состояние ожидани выбора команды
 localparam STATE_GET_ID_11					= 6'd11;
 localparam STATE_WAIT_READY_12			= 6'd12;
@@ -58,10 +57,6 @@ localparam STATE_END_43						= 6'd43;
 
 localparam STATE_SHOW_63					= 6'd63;
 
-
-
-
-
 localparam DELAY_START		= 16'h000F;
 localparam DELAY_SW_ID		= 16'h000F;
 localparam DELAY_SW_SHOW	= 16'h00FF;
@@ -72,7 +67,7 @@ localparam MAX_DATA			= 8'd21;
 
 reg[26:0] 	data;
 
-reg[5:0] 	state;
+output reg[5:0] 	state;
 reg[15:0]	delayFSM;
 reg[15:0]	delayStart;
 reg[2:0]		pCommand;
@@ -286,29 +281,29 @@ begin
 				STATE_GEN_SEND_23,
 				STATE_UNLOCK_DATA_SEND_20:begin			//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
 						lockDataSend	<= 1'b0;				//разрешаем шину данных
-						delayStart	<= NULL_16;		
-				end									
-			endcase
-			
-			if(state == STATE_GEN_SEND_23) 
-				begin	
-					lockSend		<= 1'b0;
-				end
-			else
-				begin	
+						delayStart	<= NULL_16;	
+						lockSend		<= 1'b0;	
+						lockReceive	<= 1'b1;
+				end	
+				STATE_GEN_RECEIVE_32,				
+				STATE_GEN_RECEIVE_42:begin
 					lockSend		<= 1'b1;
-				end
-				
-			if(state == STATE_GEN_RECEIVE_32 || state == STATE_GEN_RECEIVE_42) 
-				begin	
 					lockReceive	<= 1'b0;
 				end
-			else
-				begin	
-					lockReceive	<= 1'b1;
-				end
-				
-				
+				STATE_GET_ID_11,		
+				STATE_WAIT_READY_12,
+				STATE_PREPARE_SEND_21,	
+				STATE_SEND_22,	
+				STATE_PREPARE_SEND_TO_GET_30,
+				STATE_SEND_TO_GET_31,
+				STATE_PREPARE_GET_40,
+				STATE_GET_41,
+				STATE_END_43,
+				STATE_SHOW_63:begin
+						lockSend		<= 1'b1;
+						lockReceive	<= 1'b1;
+				end			
+			endcase	
 			if(delayStart == DELAY_START) 	  //задержка
 				begin		
 					lockStart	<= 1'b1;	  //сброс бита start

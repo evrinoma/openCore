@@ -11,7 +11,9 @@ ready,
 scl, 
 sda,
 state,
-stateStart
+stateStart,
+stateBMP,
+resetOut
 );
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
@@ -35,11 +37,15 @@ wire [7:0] datareceive;
 wire [7:0] datasend;
 output wire[5:0] state;
 output wire stateStart;
+output wire[5:0] stateBMP;
 output wire receive;
 output wire received;
 output wire send;
 output wire sended;
+output wire resetOut;
 wire start;
+
+assign resetOut = reset;
 
 I2C_MASTER I2C_MASTER(
 .clk(clk), 
@@ -78,7 +84,8 @@ BMP180 BMP180 (
 	.swShow(swShow), //
 	.swTemp(swTemp), //
 	.isReady(ready),
-	.out(datareceive) //out
+	.out(datareceive),
+	.state(stateBMP)
 );
 
 endmodule

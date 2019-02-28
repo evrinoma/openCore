@@ -122,18 +122,20 @@ begin
 	if (!reset)
 		begin
 			stateSda	<= STATE_IDLE_0;
+			
 			zsda	<= 1'b1;
 			rw		<= 1'b0;
 			ask	<= 1'b1;
-			lockSended		<= 1'b0;
-		
-			count <= 4'd7;
-			datareceive <= 8'd0;
-			lockReceived	<= 1'b0;
-			waitSend<= 1'b0;
-			waitReceive<= 1'b0;
 			
-			receivedBit<= 1;
+			lockSended		<= 1'b0;		
+			lockReceived	<= 1'b0;
+			
+			count 			<= 4'd7;
+			datareceive 	<= 8'd0;
+			waitSend			<= 1'b0;
+			waitReceive		<= 1'b0;
+			
+			receivedBit		<= 1'b1;	
 		end
 	else
 		begin
@@ -147,16 +149,14 @@ begin
 					begin
 						stateSda <= STATE_IDLE_0;
 					end
-				zsda	<= 1'b1;								//линия sda в состоянии z
+				zsda	<= 1'b1;							//линия sda в состоянии z
 				count <= 4'd7;							//счетчик передачи бит указывает на старший бит, так с него начинаем передачу данных
-//				rw		<= 1'b0;								//поумолчанию записываем в устройство
-				ask	<= 1'b1;								//сбрасываем бит подтвержедния приема данных ведомым
-				
-				lockSended		<= 1'b0;								//сбрасываем сигнал уведомелния о передачи порции данных
-				lockReceived	<= 1'b0;							//сбрасываем сигнал уведомления о приеме порции данных
-				waitSend<= 1'b0;						//сбрасываем сигнал передачи в ведомого новой порции данных
-				waitReceive<= 1'b0;					//сбрасываем сигнал приема с ведомого новой порции данных	
-				receivedBit<= 1;		
+				ask	<= 1'b1;							//сбрасываем бит подтвержедния приема данных ведомым				
+				lockSended		<= 1'b0;				//сбрасываем сигнал уведомелния о передачи порции данных
+				lockReceived	<= 1'b0;				//сбрасываем сигнал уведомления о приеме порции данных
+				waitSend			<= 1'b0;				//сбрасываем сигнал передачи в ведомого новой порции данных
+				waitReceive		<= 1'b0;				//сбрасываем сигнал приема с ведомого новой порции данных	
+				receivedBit		<= 1'b1;			
 			end
 			STATE_START_11: begin						//начальная последовательность sda = 0 scl = 1 задержка sda = 0 scl = 0 задержка
 				if (stateScl == STATE_START_11) 
@@ -291,7 +291,7 @@ begin
 				if (stateScl == STATE_PREPARE_RECEIVE_41) 
 					begin 						//ожидаем когда закончится этап подготовки данных ведомым
 						stateSda <= STATE_RECEIVE_42;
-						receivedBit<= 1;
+						receivedBit<= 1'b1;
 					end
 				zsda	<= 1'b1;
 			end			
@@ -314,7 +314,7 @@ begin
 					end
 				if (sda == 0) 							//фиксируем наличие низкого уровня на линии sda - сохраняем значение принятого бита
 					begin
-						receivedBit<= 0;
+						receivedBit<= 1'b0;
 					end
 				zsda	<= 1'b1;
 			end		
