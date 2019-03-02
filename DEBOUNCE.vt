@@ -31,7 +31,6 @@ event EVENT_POSEDGE_BUTTON;
 
 // constants                                           
 // general purpose registers
-reg eachvec;
 // test vector input registers
 reg clk;
 reg keyBounce;

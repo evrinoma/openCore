@@ -8,12 +8,15 @@ reg treg_scl;
 reg treg_sda;
 
 reg swId;
+reg swShow;
+`ifdef FULL_QUERY_BMP180
 reg swSettings;
 reg swTemp;
 reg swPress;
 reg swGTemp;
 reg swGPress;
-reg swShow;
+`endif	
+
 
 // wires                                               
 wire [7:0]  out;
@@ -38,24 +41,26 @@ assign scl = (en_scl) ? treg_scl : 1'bZ;
 assign sda = (en_sda) ? treg_sda : 1'bZ;
 
 I2C_BMP180 ENTITY (
-.receive(receive),
-.received(received),
-.send(send),
-.sended(sended),
-.swId(swId),
-.swSettings(swSettings),
-.swTemp(swTemp),
-.swPress(swPress),
-.swGTemp(swGTemp),
-.swGPress(swGPress),
-.swShow(swShow),
-.clk(clk), 
-.reset(reset),
-.out(out),
-.ready(ready), 
-.scl(scl),
-.sda(sda),
-.state(state)
+	.receive(receive),
+	.received(received),
+	.send(send),
+	.sended(sended),
+	.swId(swId),
+	.swShow(swShow),
+`ifdef FULL_QUERY_BMP180	
+	.swSettings(swSettings),
+	.swTemp(swTemp),
+	.swPress(swPress),
+	.swGTemp(swGTemp),
+	.swGPress(swGPress),
+`endif	
+	.clk(clk), 
+	.reset(reset),
+	.out(out),
+	.ready(ready), 
+	.scl(scl),
+	.sda(sda),
+	.state(state)
 );
 
 event EVENT_GET_ID;					//цикл тестирования - получить ID чипа 
@@ -98,11 +103,13 @@ begin
 			clk = 1'b0; 
 			swId = 1'b1;
 			swShow = 1'b1;
+`ifdef FULL_QUERY_BMP180	
 			swGPress = 1'b1;
 			swGTemp = 1'b1;
 			swPress = 1'b1;
 			swSettings = 1'b1;
 			swTemp = 1'b1;
+`endif	
 			en_scl = 1'b0;
 			en_sda = 1'b0;
 			reset = 1'b1;

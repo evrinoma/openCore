@@ -1,6 +1,6 @@
 //use only to load on board Chip
 `define WITH_DEBOUNCE
-//`undef WITH_DEBOUNCE
+`undef WITH_DEBOUNCE
 
 `define FULL_QUERY_BMP180
 `undef FULL_QUERY_BMP180
