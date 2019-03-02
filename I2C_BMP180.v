@@ -16,6 +16,10 @@ stateStart,
 pinout
 );
 
+//use only to load on board Chip
+`define WITH_DEBOUNCE
+`undef WITH_DEBOUNCE
+
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
 //input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
 //input		wire swTemp;				//кнопка режим - переключить режим на получение температуры
@@ -51,6 +55,7 @@ wire swIdDeBounce;
 
 assign pinout = swIdDeBounce;
 
+`ifndef WITH_DEBOUNCE
 DEBOUNCE resetKey( 
 .clk(clk), 
 .keyBounce(reset), 
@@ -62,37 +67,50 @@ DEBOUNCE swIdKey(
 .keyBounce(swId), 
 .keyDeBounce(swIdDeBounce)
 );
+`endif
 
 I2C_MASTER I2C_MASTER(
-.clk(clk), 
-.reset(resetDeBounce), 
-.start(start), 
-.ready(ready), 
-.sda(sda), 
-.scl(scl), 
-.send(send), 
-.datasend(datasend), 
-.sended(sended), 
-.receive(receive), 
-.datareceive(datareceive), 
-.received(received), 
-.state(state),
-.stateStart(stateStart)
+	.clk(clk), 
+`ifdef WITH_DEBOUNCE
+	.reset(resetDeBounce), 
+`else
+	.reset(reset), 
+`endif
+	.start(start), 
+	.ready(ready), 
+	.sda(sda), 
+	.scl(scl), 
+	.send(send), 
+	.datasend(datasend), 
+	.sended(sended), 
+	.receive(receive), 
+	.datareceive(datareceive), 
+	.received(received), 
+	.state(state),
+	.stateStart(stateStart)
 );
 
 // assign statements (if any)                          
 BMP180 BMP180 (
 // port map - connection between master ports and signals/registers   
 	.clk(clk), //
+`ifdef WITH_DEBOUNCE
+	.reset(resetDeBounce), 
+`else
+	.reset(reset), 
+`endif
 	.datareceive(out),
 	.datasend(datasend), //datasend
 	.receive(receive),
 	.received(received),
-	.reset(resetDeBounce), //
 	.send(send),
 	.sended(sended),
 	.start(start),
-	.swId(swIdDeBounce), //
+`ifdef WITH_DEBOUNCE
+	.swId(swIdDeBounce), 
+`else
+	.swId(swId), 
+`endif	
 //	.swPress(swPress), //
 //	.swGTemp(swGTemp), // 
 //	.swGPress(swGPress), //

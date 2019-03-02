@@ -3,7 +3,7 @@ input wire clk;
 input wire keyBounce;
 output wire keyDeBounce;
 
-reg lockDeBounce		= 1'b1;
+reg lockDeBounce = 1'b1;
 localparam MAX	= 16'hFF;
 localparam MIN	= 16'h00;
 reg [15:0] counter = MIN;
