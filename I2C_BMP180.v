@@ -3,7 +3,8 @@ receive,
 received,
 send,
 sended,
-swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
+swId, 
+//swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
 clk, 
 reset, 
 out, 
@@ -12,17 +13,16 @@ scl,
 sda,
 state,
 stateStart,
-stateBMP,
-resetOut
+pinout
 );
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
-input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
-input		wire swTemp;				//кнопка режим - переключить режим на получение температуры
-input		wire swGTemp;				//кнопка режим - прочитать температуру
-input		wire swPress;				//кнопка режим - прочитать режим на получение давления
-input		wire swGPress;				//кнопка режим - прочитать давление
-input		wire swShow;				//кнопка режим - прочитать показать принятые данные
+//input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
+//input		wire swTemp;				//кнопка режим - переключить режим на получение температуры
+//input		wire swGTemp;				//кнопка режим - прочитать температуру
+//input		wire swPress;				//кнопка режим - прочитать режим на получение давления
+//input		wire swGPress;				//кнопка режим - прочитать давление
+//input		wire swShow;				//кнопка режим - прочитать показать принятые данные
 
 input 	wire clk;					//сигнал тактовой частоты
 input 	wire reset;					//сигнал сброса
@@ -35,21 +35,37 @@ inout 	scl;							//сигнал тактирования I2C
 
 wire [7:0] datareceive;
 wire [7:0] datasend;
+
 output wire[5:0] state;
 output wire stateStart;
-output wire[5:0] stateBMP;
 output wire receive;
 output wire received;
 output wire send;
 output wire sended;
-output wire resetOut;
+
+output wire pinout;
 wire start;
 
-assign resetOut = reset;
+wire resetDeBounce;
+wire swIdDeBounce;
+
+assign pinout = swIdDeBounce;
+
+DEBOUNCE resetKey( 
+.clk(clk), 
+.keyBounce(reset), 
+.keyDeBounce(resetDeBounce)
+);
+
+DEBOUNCE swIdKey( 
+.clk(clk), 
+.keyBounce(swId), 
+.keyDeBounce(swIdDeBounce)
+);
 
 I2C_MASTER I2C_MASTER(
 .clk(clk), 
-.reset(reset), 
+.reset(resetDeBounce), 
 .start(start), 
 .ready(ready), 
 .sda(sda), 
@@ -72,20 +88,19 @@ BMP180 BMP180 (
 	.datasend(datasend), //datasend
 	.receive(receive),
 	.received(received),
-	.reset(reset), //
+	.reset(resetDeBounce), //
 	.send(send),
 	.sended(sended),
 	.start(start),
-	.swId(swId), //
-	.swPress(swPress), //
-	.swGTemp(swGTemp), // 
-	.swGPress(swGPress), //
-	.swSettings(swSettings), //
-	.swShow(swShow), //
-	.swTemp(swTemp), //
+	.swId(swIdDeBounce), //
+//	.swPress(swPress), //
+//	.swGTemp(swGTemp), // 
+//	.swGPress(swGPress), //
+//	.swSettings(swSettings), //
+//	.swShow(swShow), //
+//	.swTemp(swTemp), //
 	.isReady(ready),
-	.out(datareceive),
-	.state(stateBMP)
+	.out(datareceive)
 );
 
 endmodule

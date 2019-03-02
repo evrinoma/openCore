@@ -39,7 +39,7 @@
 
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE6E22C8
-set_global_assignment -name TOP_LEVEL_ENTITY DEBOUNCE
+set_global_assignment -name TOP_LEVEL_ENTITY I2C_BMP180
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 15.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:50:46  APRIL 26, 2016"
 set_global_assignment -name LAST_QUARTUS_VERSION "17.0.0 Standard Edition"
@@ -74,11 +74,14 @@ set_location_assignment PIN_23 -to clk
 set_location_assignment PIN_77 -to sda
 set_location_assignment PIN_76 -to scl
 set_location_assignment PIN_88 -to reset
-set_location_assignment PIN_25 -to swShow
+set_location_assignment PIN_30 -to ready
+set_location_assignment PIN_24 -to swId
 set_location_assignment PIN_31 -to received
 set_global_assignment -name EDA_TEST_BENCH_NAME BMP180 -section_id eda_simulation
 set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id BMP180
 set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME BMP180_vlg_tst -section_id BMP180
+set_instance_assignment -name IO_STANDARD "2.5 V" -to clk
+set_instance_assignment -name IO_STANDARD "2.5 V" -to out
 set_location_assignment PIN_66 -to state[5]
 set_location_assignment PIN_65 -to state[4]
 set_location_assignment PIN_64 -to state[3]
@@ -88,24 +91,9 @@ set_location_assignment PIN_58 -to state[0]
 set_location_assignment PIN_33 -to stateStart
 set_location_assignment PIN_38 -to send
 set_location_assignment PIN_39 -to receive
-set_location_assignment PIN_67 -to resetOut
 set_global_assignment -name EDA_TEST_BENCH_NAME debounce -section_id eda_simulation
 set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id debounce
 set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME debounce_vlg_tst -section_id debounce
-set_location_assignment PIN_68 -to swIdOut
-set_location_assignment PIN_24 -to keyBounce
-set_location_assignment PIN_28 -to keyDeBounce
-set_location_assignment PIN_30 -to repeater
-set_global_assignment -name VERILOG_FILE DEBOUNCE_SINGLE.v
-set_global_assignment -name VERILOG_FILE DEBOUNCE.v
-set_global_assignment -name VERILOG_TEST_BENCH_FILE DEBOUNCE_SINGLE.vt
-set_global_assignment -name VERILOG_TEST_BENCH_FILE DEBOUNCE.vt
-set_global_assignment -name VERILOG_TEST_BENCH_FILE BMP180.vt
-set_global_assignment -name VERILOG_TEST_BENCH_FILE I2C_BMP180.vt
-set_global_assignment -name VERILOG_FILE BMP180.v
-set_global_assignment -name VERILOG_FILE I2C_BMP180.v
-set_global_assignment -name BDF_FILE I2C_BMP180_SHM.bdf
-set_global_assignment -name VERILOG_FILE I2C_MASTER.v
 set_global_assignment -name EDA_TEST_BENCH_FILE I2C_BMP180.vt -section_id I2C_BMP180
 set_global_assignment -name EDA_TEST_BENCH_FILE SINGLE_GENERATOR.vt -section_id SINGLE_GENERATOR
 set_global_assignment -name EDA_TEST_BENCH_FILE BMP180_LOW_PACK.vt -section_id BMP180_LOW_PACK
@@ -118,6 +106,16 @@ set_global_assignment -name EDA_TEST_BENCH_FILE DEBOUNCE_SINGLE.vt -section_id d
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_instance_assignment -name IO_STANDARD "2.5 V" -to clk
-set_instance_assignment -name IO_STANDARD "2.5 V" -to out
+set_location_assignment PIN_67 -to pinout
+set_global_assignment -name VERILOG_FILE CLK_DIV.v
+set_global_assignment -name VERILOG_FILE DEBOUNCE_SINGLE.v
+set_global_assignment -name VERILOG_FILE DEBOUNCE.v
+set_global_assignment -name VERILOG_TEST_BENCH_FILE DEBOUNCE_SINGLE.vt
+set_global_assignment -name VERILOG_TEST_BENCH_FILE DEBOUNCE.vt
+set_global_assignment -name VERILOG_TEST_BENCH_FILE BMP180.vt
+set_global_assignment -name VERILOG_TEST_BENCH_FILE I2C_BMP180.vt
+set_global_assignment -name VERILOG_FILE BMP180.v
+set_global_assignment -name VERILOG_FILE I2C_BMP180.v
+set_global_assignment -name BDF_FILE I2C_BMP180_SHM.bdf
+set_global_assignment -name VERILOG_FILE I2C_MASTER.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

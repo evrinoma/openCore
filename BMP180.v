@@ -1,16 +1,18 @@
-module BMP180(swId, swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
+module BMP180(swId, 
+//swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
 isReady,
-clk, reset, start, send, datasend, sended, receive, datareceive, received, out, state);
+clk, reset, start, send, datasend, sended, receive, datareceive, received, out
+);
 
 input		wire clk;
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
-input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
-input		wire swGTemp;				//кнопка режим - переключить режим на получение температуры
-input		wire swTemp;				//кнопка режим - прочитать температуру
-input		wire swGPress;				//кнопка режим - прочитать режим на получение давления
-input		wire swPress;				//кнопка режим - прочитать давление
-input		wire swShow;				//кнопка режим - прочитать показать принятые данные
+//input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
+//input		wire swGTemp;				//кнопка режим - переключить режим на получение температуры
+//input		wire swTemp;				//кнопка режим - прочитать температуру
+//input		wire swGPress;				//кнопка режим - прочитать режим на получение давления
+//input		wire swPress;				//кнопка режим - прочитать давление
+//input		wire swShow;				//кнопка режим - прочитать показать принятые данные
 
 input		wire reset;					//сброс
 
@@ -67,7 +69,7 @@ localparam MAX_DATA			= 8'd21;
 
 reg[26:0] 	data;
 
-output reg[5:0] 	state;
+reg[5:0] 	state;
 reg[15:0]	delayFSM;
 reg[15:0]	delayStart;
 reg[2:0]		pCommand;
@@ -102,7 +104,6 @@ assign receive =  !lockReceive 	? RECEIVE 	: !RECEIVE;
 
 assign out = (pOut <= MAX_DATA)? Data[pOut]: NULL_8;
 
-
 always@(posedge clk)
 begin
 //при сбросе конечного автомата выставлям параметры
@@ -125,30 +126,33 @@ else
 	begin
 		case (state)
 			STATE_IDLE_0:begin
-				case({swId, swSettings, swTemp, swPress, swGTemp, swGPress, swShow})
-						7'b1000000:begin
-								if (!singleQuery)									//первое срабатываение автомата
-									begin
-										if(delayFSM == DELAY_SW_ID) 							//задержка фиксирования факта удержания кнопки swId
-											begin
-												state 		<= STATE_GET_ID_11;	//переходим в режим установки передаваемых по шине I2C значений
-												delayFSM 	<= NULL_16;
-												singleQuery	<= 1'b1;
-											end
-										else
-											delayFSM <= delayFSM + 16'd1;
-									end
-							end
-							7'b0100000,
-							7'b0010000,
-							7'b0001000,
-							7'b0000100,
-							7'b0000010,
-							7'b0000001:
+//				case({swId, swSettings, swTemp, swPress, swGTemp, swGPress, swShow})
+//							7'b1000000:begin
+				if (!swId) 
+				begin
+						if (!singleQuery)									//первое срабатываение автомата
 							begin
-									state <= STATE_IDLE_0;	
+								if(delayFSM == DELAY_SW_ID) 							//задержка фиксирования факта удержания кнопки swId
+									begin
+										state 		<= STATE_GET_ID_11;	//переходим в режим установки передаваемых по шине I2C значений
+										delayFSM 	<= NULL_16;
+										singleQuery	<= 1'b1;
+									end
+								else
+									delayFSM <= delayFSM + 16'd1;
 							end
-				endcase
+				end
+//							end
+//							7'b0100000,
+//							7'b0010000,
+//							7'b0001000,
+//							7'b0000100,
+//							7'b0000010,
+//							7'b0000001:
+//							begin
+//									state <= STATE_IDLE_0;	
+//							end
+//				endcase
 				lastSended		<= 1'b0;
 				lastReceived	<= 1'b0;
 				pOut				<= NULL_8;
@@ -241,34 +245,34 @@ else
 						state <= STATE_GET_41;
 			end
 			
-			STATE_SHOW_63: begin
-				if (!swShow) 
-					begin
-						if(delayFSM == DELAY_SW_SHOW) 
-							begin
-								if (pOut==MAX_DATA)
-									begin
-										state 	<= STATE_IDLE_0;
-									end
-								else	
-									begin
-										pOut 		<= pOut + 8'd1;
-										delayFSM <= NULL_16;
-									end
-							end
-						else
-							delayFSM <= delayFSM + 8'd1;
-					end
-				else
-					delayFSM <= 16'd0;
-			end
+//			STATE_SHOW_63: begin
+//				if (!swShow) 
+//					begin
+//						if(delayFSM == DELAY_SW_SHOW) 
+//							begin
+//								if (pOut==MAX_DATA)
+//									begin
+//										state 	<= STATE_IDLE_0;
+//									end
+//								else	
+//									begin
+//										pOut 		<= pOut + 8'd1;
+//										delayFSM <= NULL_16;
+//									end
+//							end
+//						else
+//							delayFSM <= delayFSM + 8'd1;
+//					end
+//				else
+//					delayFSM <= 16'd0;
+//			end
 		endcase
 	end	
 end
 
 always@(posedge clk)
 begin
-	if (reset)
+	if (!reset)
 		begin
 			lockDataSend	<= 1'b1;				//сброс шины данных
 			lockStart		<= 1'b1;				//сброс бита start
