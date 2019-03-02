@@ -126,7 +126,7 @@ else
 		case (state)
 			STATE_IDLE_0:begin
 				case({swId, swSettings, swTemp, swPress, swGTemp, swGPress, swShow})
-						7'b0111111:begin
+						7'b1000000:begin
 								if (!singleQuery)									//первое срабатываение автомата
 									begin
 										if(delayFSM == DELAY_SW_ID) 							//задержка фиксирования факта удержания кнопки swId
@@ -138,7 +138,16 @@ else
 										else
 											delayFSM <= delayFSM + 16'd1;
 									end
-							end	
+							end
+							7'b0100000,
+							7'b0010000,
+							7'b0001000,
+							7'b0000100,
+							7'b0000010,
+							7'b0000001:
+							begin
+									state <= STATE_IDLE_0;	
+							end
 				endcase
 				lastSended		<= 1'b0;
 				lastReceived	<= 1'b0;
@@ -259,7 +268,7 @@ end
 
 always@(posedge clk)
 begin
-	if (!reset)
+	if (reset)
 		begin
 			lockDataSend	<= 1'b1;				//сброс шины данных
 			lockStart		<= 1'b1;				//сброс бита start

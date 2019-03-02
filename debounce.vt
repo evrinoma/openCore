@@ -26,6 +26,9 @@
 // 
 `timescale 1 ns/ 1 ps
 module debounce_vlg_tst();
+event EVENT_NEGEDGE_BUTTON;
+event EVENT_POSEDGE_BUTTON;
+
 // constants                                           
 // general purpose registers
 reg eachvec;
@@ -47,41 +50,138 @@ debounce i1 (
   forever #10 clk = ~clk;
  end
  
- initial begin
-  keyBounce = 0;
-  #10;
-  keyBounce=1;
-  #20;
-  keyBounce = 0;
-  #10;
-  keyBounce=1;
-  #30; 
-  keyBounce = 0;
-  #10;
-  keyBounce=1;
-  #40;
-  keyBounce = 0;
-  #10;
-  keyBounce=1;
-  #30; 
-  keyBounce = 0;
-  #10;
-  keyBounce=1; 
-  #20000; 
-  keyBounce = 0;
-  #10;
-  keyBounce=1;
-  #20;
-  keyBounce = 0;
-  #10;
-  keyBounce=1;
-  #30; 
-  keyBounce = 0;
-  #10;
-  keyBounce=1;
-  #40;
-  keyBounce = 0; 
-  #100 $stop;
- end                                                    
+ 
+ 
+// initial begin
+//  keyBounce = 1;
+//  #10;
+//  keyBounce=0;
+//  #10;
+//  keyBounce = 1;
+//  #20;
+//  keyBounce=0;
+//  #10; 
+//  keyBounce = 1;
+//  #30;
+//  keyBounce=0;
+//  #10;
+//  keyBounce = 1;
+//  #40;
+//  keyBounce=0;
+//  #10; 
+//  keyBounce = 1;
+//  #30;
+//  keyBounce=0; 
+//  #2000; 
+//  keyBounce = 1;
+//  #10;
+//  keyBounce=0;
+//  #10;
+//  keyBounce = 1;
+//  #20;
+//  keyBounce=0;
+//  #10; 
+//  keyBounce = 1;
+//  #30;
+//  keyBounce=0;
+//  #10;
+//  keyBounce = 1; 
+//  #40;
+//  keyBounce=0;
+//  #600 $stop;
+// end
+ 
+
+
+initial 
+begin
+	forever begin
+	@(EVENT_POSEDGE_BUTTON)
+		keyBounce = 1;
+		#10;
+		keyBounce=0;
+		#10;
+		keyBounce = 1;
+		#20;
+		keyBounce=0;
+		#10; 
+		keyBounce = 1;
+		#30;
+		keyBounce=0;
+		#10;
+		keyBounce = 1;
+		#40;
+		keyBounce=0;
+		#10; 
+		keyBounce = 1;
+		#30;
+		keyBounce=0; 
+		#2000; 
+		keyBounce = 1;
+		#10;
+		keyBounce=0;
+		#10;
+		keyBounce = 1;
+		#20;
+		keyBounce=0;
+		#10; 
+		keyBounce = 1;
+		#30;
+		keyBounce=0;
+		#10;
+		keyBounce = 1; 
+		#40;
+		keyBounce=0;
+	end   
+end  
+
+initial 
+begin
+	forever begin
+	@(EVENT_NEGEDGE_BUTTON)
+		keyBounce = 0;
+		#10;
+		keyBounce=1;
+		#20;
+		keyBounce = 0;
+		#10;
+		keyBounce=1;
+		#30; 
+		keyBounce = 0;
+		#10;
+		keyBounce=1;
+		#40;
+		keyBounce = 0;
+		#10;
+		keyBounce=1;
+		#30; 
+		keyBounce = 0;
+		#10;
+		keyBounce=1; 
+		#20000; 
+		keyBounce = 0;
+		#10;
+		keyBounce=1;
+		#20;
+		keyBounce = 0;
+		#10;
+		keyBounce=1;
+		#30; 
+		keyBounce = 0;
+		#10;
+		keyBounce=1;
+		#40;
+		keyBounce = 0; 
+	end   
+end  
+
+initial 
+begin
+#0		->EVENT_NEGEDGE_BUTTON;
+#2500		->EVENT_NEGEDGE_BUTTON;
+
+#5000	$stop;
+end
+
 endmodule
 
