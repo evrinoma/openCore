@@ -111,12 +111,7 @@ assign receive =  !lockReceive 	? RECEIVE 	: !RECEIVE;
 
 assign out = (pOut <= MAX_DATA)? Data[pOut]: NULL_8;
 
-assign state[0] = pOut[1];
-assign state[1] = stateFSM[0];
-assign state[2] = stateFSM[1];
-assign state[3] = stateFSM[2];
-assign state[4] = stateFSM[3];
-assign state[5] = stateFSM[4];
+assign state = stateFSM;
 
 always@(posedge clk)
 begin
