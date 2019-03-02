@@ -85,9 +85,6 @@ localparam QUARTER8					= 8'd62;
 localparam HALF8						= 8'd124;
 
 
-
-//assign sda = (zsda) ? 1'bz : dsda;
-//assign scl = (zscl) ? 1'bz : dscl;
 assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 assign ready = (stateSda == STATE_IDLE_0) ? 1'b1 : 1'b0;

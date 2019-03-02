@@ -1,18 +1,23 @@
-module BMP180(swId, 
-//swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
-isReady,
-clk, reset, start, send, datasend, sended, receive, datareceive, received, out
+module BMP180(
+	swId, 
+`ifdef FULL_QUERY_BMP180
+	swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
+`endif
+	isReady,
+	clk, reset, start, send, datasend, sended, receive, datareceive, received, out
 );
 
 input		wire clk;
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
-//input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
-//input		wire swGTemp;				//кнопка режим - переключить режим на получение температуры
-//input		wire swTemp;				//кнопка режим - прочитать температуру
-//input		wire swGPress;				//кнопка режим - прочитать режим на получение давления
-//input		wire swPress;				//кнопка режим - прочитать давление
-//input		wire swShow;				//кнопка режим - прочитать показать принятые данные
+`ifdef FULL_QUERY_BMP180
+input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
+input		wire swGTemp;				//кнопка режим - переключить режим на получение температуры
+input		wire swTemp;				//кнопка режим - прочитать температуру
+input		wire swGPress;				//кнопка режим - прочитать режим на получение давления
+input		wire swPress;				//кнопка режим - прочитать давление
+input		wire swShow;				//кнопка режим - прочитать показать принятые данные
+`endif
 
 input		wire reset;					//сброс
 
@@ -126,33 +131,39 @@ else
 	begin
 		case (state)
 			STATE_IDLE_0:begin
-//				case({swId, swSettings, swTemp, swPress, swGTemp, swGPress, swShow})
-//							7'b1000000:begin
-				if (!swId) 
-				begin
-						if (!singleQuery)									//первое срабатываение автомата
-							begin
-								if(delayFSM == DELAY_SW_ID) 							//задержка фиксирования факта удержания кнопки swId
-									begin
-										state 		<= STATE_GET_ID_11;	//переходим в режим установки передаваемых по шине I2C значений
-										delayFSM 	<= NULL_16;
-										singleQuery	<= 1'b1;
-									end
-								else
-									delayFSM <= delayFSM + 16'd1;
+`ifdef FULL_QUERY_BMP180				
+				case({swId, swSettings, swTemp, swPress, swGTemp, swGPress, swShow})
+							7'b1000000:
+`else							
+								if (!swId) 
+`endif
+								begin
+	
+										if (!singleQuery)									//первое срабатываение автомата
+											begin
+												if(delayFSM == DELAY_SW_ID) 							//задержка фиксирования факта удержания кнопки swId
+													begin
+														state 		<= STATE_GET_ID_11;	//переходим в режим установки передаваемых по шине I2C значений
+														delayFSM 	<= NULL_16;
+														singleQuery	<= 1'b1;
+													end
+												else
+													delayFSM <= delayFSM + 16'd1;
+											end
+								end
+`ifdef FULL_QUERY_BMP180								
 							end
-				end
-//							end
-//							7'b0100000,
-//							7'b0010000,
-//							7'b0001000,
-//							7'b0000100,
-//							7'b0000010,
-//							7'b0000001:
-//							begin
-//									state <= STATE_IDLE_0;	
-//							end
-//				endcase
+							7'b0100000,
+							7'b0010000,
+							7'b0001000,
+							7'b0000100,
+							7'b0000010,
+							7'b0000001:
+								begin
+									state <= STATE_IDLE_0;	
+								end
+				endcase
+`endif
 				lastSended		<= 1'b0;
 				lastReceived	<= 1'b0;
 				pOut				<= NULL_8;
@@ -244,28 +255,29 @@ else
 					else 	
 						state <= STATE_GET_41;
 			end
-			
-//			STATE_SHOW_63: begin
-//				if (!swShow) 
-//					begin
-//						if(delayFSM == DELAY_SW_SHOW) 
-//							begin
-//								if (pOut==MAX_DATA)
-//									begin
-//										state 	<= STATE_IDLE_0;
-//									end
-//								else	
-//									begin
-//										pOut 		<= pOut + 8'd1;
-//										delayFSM <= NULL_16;
-//									end
-//							end
-//						else
-//							delayFSM <= delayFSM + 8'd1;
-//					end
-//				else
-//					delayFSM <= 16'd0;
-//			end
+`ifdef FULL_QUERY_BMP180			
+			STATE_SHOW_63: begin
+				if (!swShow) 
+					begin
+						if(delayFSM == DELAY_SW_SHOW) 
+							begin
+								if (pOut==MAX_DATA)
+									begin
+										state 	<= STATE_IDLE_0;
+									end
+								else	
+									begin
+										pOut 		<= pOut + 8'd1;
+										delayFSM <= NULL_16;
+									end
+							end
+						else
+							delayFSM <= delayFSM + 8'd1;
+					end
+				else
+					delayFSM <= 16'd0;
+			end
+`endif
 		endcase
 	end	
 end

@@ -1,32 +1,40 @@
-module I2C_BMP180(
-receive,
-received,
-send,
-sended,
-swId, 
-//swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
-clk, 
-reset, 
-out, 
-ready, 
-scl, 
-sda,
-state,
-stateStart,
-pinout
-);
-
 //use only to load on board Chip
 `define WITH_DEBOUNCE
-`undef WITH_DEBOUNCE
+//`undef WITH_DEBOUNCE
+
+`define FULL_QUERY_BMP180
+`undef FULL_QUERY_BMP180
+
+module I2C_BMP180(
+	receive,
+	received,
+	send,
+	sended,
+	swId, 	
+`ifdef FULL_QUERY_BMP180
+	swSettings, swTemp, swGTemp, swPress, swGPress, swShow,
+`endif
+	clk, 
+	reset, 
+	out, 
+	ready, 
+	scl, 
+	sda,
+	state,
+	stateStart,
+	pinout
+);
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
-//input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
-//input		wire swTemp;				//кнопка режим - переключить режим на получение температуры
-//input		wire swGTemp;				//кнопка режим - прочитать температуру
-//input		wire swPress;				//кнопка режим - прочитать режим на получение давления
-//input		wire swGPress;				//кнопка режим - прочитать давление
-//input		wire swShow;				//кнопка режим - прочитать показать принятые данные
+
+`ifdef FULL_QUERY_BMP180
+input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
+input		wire swTemp;				//кнопка режим - переключить режим на получение температуры
+input		wire swGTemp;				//кнопка режим - прочитать температуру
+input		wire swPress;				//кнопка режим - прочитать режим на получение давления
+input		wire swGPress;				//кнопка режим - прочитать давление
+input		wire swShow;				//кнопка режим - прочитать показать принятые данные
+`endif
 
 input 	wire clk;					//сигнал тактовой частоты
 input 	wire reset;					//сигнал сброса
@@ -55,7 +63,7 @@ wire swIdDeBounce;
 
 assign pinout = swIdDeBounce;
 
-`ifndef WITH_DEBOUNCE
+`ifdef WITH_DEBOUNCE
 DEBOUNCE resetKey( 
 .clk(clk), 
 .keyBounce(reset), 
@@ -100,7 +108,7 @@ BMP180 BMP180 (
 	.reset(reset), 
 `endif
 	.datareceive(out),
-	.datasend(datasend), //datasend
+	.datasend(datasend), 
 	.receive(receive),
 	.received(received),
 	.send(send),
@@ -110,13 +118,15 @@ BMP180 BMP180 (
 	.swId(swIdDeBounce), 
 `else
 	.swId(swId), 
-`endif	
-//	.swPress(swPress), //
-//	.swGTemp(swGTemp), // 
-//	.swGPress(swGPress), //
-//	.swSettings(swSettings), //
-//	.swShow(swShow), //
-//	.swTemp(swTemp), //
+	`ifdef FULL_QUERY_BMP180
+		.swPress(swPress), 
+		.swGTemp(swGTemp), 
+		.swGPress(swGPress), 
+		.swSettings(swSettings), 
+		.swShow(swShow), 
+		.swTemp(swTemp), 
+	`endif
+`endif
 	.isReady(ready),
 	.out(datareceive)
 );
