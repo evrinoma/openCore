@@ -46,15 +46,19 @@ localparam STATE_START_11					= 6'd11;
 localparam STATE_WAIT_RESTART_12			= 6'd12;
 localparam STATE_RESTART_13				= 6'd13;
 
-localparam STATE_PREPARE_SEND_21			= 6'd21;
+localparam STATE_PREPARE_SEND_21			= 6'd21;//going to STATE_PREPARE_STRETCH_51 state
 localparam STATE_SEND_22					= 6'd22;
 
-localparam STATE_WAIT_ACK_31				= 6'd31;
+localparam STATE_WAIT_ACK_31				= 6'd31;//going to STATE_PREPARE_STRETCH_51 state
 localparam STATE_WAIT_GEN_ACK_32			= 6'd32;
 localparam STATE_ACK_33						= 6'd33;
 
-localparam STATE_PREPARE_RECEIVE_41		= 6'd41;
+localparam STATE_PREPARE_RECEIVE_41		= 6'd41;//going to STATE_PREPARE_STRETCH_51 state
 localparam STATE_RECEIVE_42				= 6'd42;
+
+localparam STATE_RECEIVE_42				= 6'd42;
+
+localparam STATE_PREPARE_STRETCH_51		= 6'd51;
 
 localparam STATE_STOP_63					= 6'd63;
 
