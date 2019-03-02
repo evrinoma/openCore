@@ -25,7 +25,7 @@
 // Simulation tool : ModelSim-Altera (Verilog)
 // 
 `timescale 1 ns/ 1 ps
-module debounce_vlg_tst();
+module debounce_single_vlg_tst();
 event EVENT_NEGEDGE_BUTTON;
 event EVENT_POSEDGE_BUTTON;
 
@@ -39,7 +39,7 @@ reg keyBounce;
 wire keyDeBounce;
 
 // assign statements (if any)                          
-debounce i1 (
+DEBOUNCE_SINGLE i1 (
 // port map - connection between master ports and signals/registers   
 	.clk(clk),
 	.keyBounce(keyBounce),
@@ -50,49 +50,6 @@ debounce i1 (
   forever #10 clk = ~clk;
  end
  
- 
- 
-// initial begin
-//  keyBounce = 1;
-//  #10;
-//  keyBounce=0;
-//  #10;
-//  keyBounce = 1;
-//  #20;
-//  keyBounce=0;
-//  #10; 
-//  keyBounce = 1;
-//  #30;
-//  keyBounce=0;
-//  #10;
-//  keyBounce = 1;
-//  #40;
-//  keyBounce=0;
-//  #10; 
-//  keyBounce = 1;
-//  #30;
-//  keyBounce=0; 
-//  #2000; 
-//  keyBounce = 1;
-//  #10;
-//  keyBounce=0;
-//  #10;
-//  keyBounce = 1;
-//  #20;
-//  keyBounce=0;
-//  #10; 
-//  keyBounce = 1;
-//  #30;
-//  keyBounce=0;
-//  #10;
-//  keyBounce = 1; 
-//  #40;
-//  keyBounce=0;
-//  #600 $stop;
-// end
- 
-
-
 initial 
 begin
 	forever begin

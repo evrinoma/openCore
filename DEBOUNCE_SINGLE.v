@@ -1,5 +1,6 @@
-module debounce(keyBounce,clk,keyDeBounce,repeater);
+module DEBOUNCE_SINGLE(keyBounce,clk,keyDeBounce,repeater);
 
+//кнопка одиночного запуска генерирует один импульс
 //макрос для условной компиляции
 //если он установлен, то debounce кнопки генерирует сигнал 	  ___/'''\___ EVENT_NEGEDGE_BUTTON
 //если он не установлен, то debounce кнопки генерирует сигнал '''\___/''' EVENT_POSEDGE_BUTTON
