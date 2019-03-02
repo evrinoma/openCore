@@ -1,22 +1,25 @@
 module BMP180(
 	swId, 
+	swShow,
 `ifdef FULL_QUERY_BMP180
-	swSettings, swTemp, swGTemp, swPress, swGPress, swShow, 
+	swSettings, swTemp, swGTemp, swPress, swGPress,  
 `endif
 	isReady,
-	clk, reset, start, send, datasend, sended, receive, datareceive, received, out
+	clk, reset, start, send, datasend, sended, receive, datareceive, received, out,
+	state
 );
 
 input		wire clk;
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
+input		wire swShow;				//кнопка режим - прочитать показать принятые данные
+
 `ifdef FULL_QUERY_BMP180
 input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
 input		wire swGTemp;				//кнопка режим - переключить режим на получение температуры
 input		wire swTemp;				//кнопка режим - прочитать температуру
 input		wire swGPress;				//кнопка режим - прочитать режим на получение давления
 input		wire swPress;				//кнопка режим - прочитать давление
-input		wire swShow;				//кнопка режим - прочитать показать принятые данные
 `endif
 
 input		wire reset;					//сброс
@@ -33,8 +36,8 @@ input		wire sended;				//сигнал записи новой порции да�
 input		wire[7:0] datareceive;	//регистр принятых данных по шине - полученый байт
 input		wire received;				//готовность полученого байта для выгрузки
 
-output	wire [7:0] out;			//данные
-
+output	wire[7:0] out;				//данные
+output 	wire[5:0] state;
 
 localparam ADR 				= 7'h77;		//адрес чипа BMP180
 localparam READ				= 1'h1;		//чтение или запись 
@@ -62,11 +65,11 @@ localparam STATE_GET_41						= 6'd41;
 localparam STATE_GEN_RECEIVE_42			= 6'd42;
 localparam STATE_END_43						= 6'd43;
 
-localparam STATE_SHOW_63					= 6'd63;
+localparam STATE_PREPARE_SHOW_61			= 6'd61;
+localparam STATE_SHOW_62					= 6'd62;
+localparam STATE_SHOW_END_63				= 6'd63;
 
 localparam DELAY_START		= 16'h000F;
-localparam DELAY_SW_ID		= 16'h000F;
-localparam DELAY_SW_SHOW	= 16'h00FF;
 localparam NULL_16			= 16'h0000;
 localparam NULL_8				= 8'h00;
 
@@ -74,8 +77,7 @@ localparam MAX_DATA			= 8'd21;
 
 reg[26:0] 	data;
 
-reg[5:0] 	state;
-reg[15:0]	delayFSM;
+reg[5:0] 	stateFSM;
 reg[15:0]	delayStart;
 reg[2:0]		pCommand;
 reg[7:0]		pData;
@@ -109,12 +111,19 @@ assign receive =  !lockReceive 	? RECEIVE 	: !RECEIVE;
 
 assign out = (pOut <= MAX_DATA)? Data[pOut]: NULL_8;
 
+assign state[0] = pOut[1];
+assign state[1] = stateFSM[0];
+assign state[2] = stateFSM[1];
+assign state[3] = stateFSM[2];
+assign state[4] = stateFSM[3];
+assign state[5] = stateFSM[4];
+
 always@(posedge clk)
 begin
 //при сбросе конечного автомата выставлям параметры
 if (!reset) 
 	begin
-		state 			<= STATE_IDLE_0;		//режим ожидания
+		stateFSM 			<= STATE_IDLE_0;		//режим ожидания
 		singleQuery		<= 1'b0;				//одиночное срабатывание автомата сброшено
 		
 		lastSended		<= 1'b0;	
@@ -122,48 +131,48 @@ if (!reset)
 		
 		pCommand 		<= 2'd2;			
 		pData				<= NULL_8;	
-		
-		delayFSM 		<= NULL_16;
+
 		data				<= 26'd0;
 		pOut				<= NULL_8;
 	end
 else
 	begin
-		case (state)
+		case (stateFSM)
 			STATE_IDLE_0:begin
 `ifdef FULL_QUERY_BMP180				
 				case({swId, swSettings, swTemp, swPress, swGTemp, swGPress, swShow})
-							7'b1000000:
-`else							
-								if (!swId) 
-`endif
-								begin
-	
-										if (!singleQuery)									//первое срабатываение автомата
-											begin
-												if(delayFSM == DELAY_SW_ID) 							//задержка фиксирования факта удержания кнопки swId
-													begin
-														state 		<= STATE_GET_ID_11;	//переходим в режим установки передаваемых по шине I2C значений
-														delayFSM 	<= NULL_16;
-														singleQuery	<= 1'b1;
-													end
-												else
-													delayFSM <= delayFSM + 16'd1;
-											end
-								end
-`ifdef FULL_QUERY_BMP180								
+							7'b1011111,
+							7'b1101111,
+							7'b1110111,
+							7'b1111011,
+							7'b1111101:
+							begin
+								stateFSM <= STATE_IDLE_0;	
 							end
-							7'b0100000,
-							7'b0010000,
-							7'b0001000,
-							7'b0000100,
-							7'b0000010,
-							7'b0000001:
-								begin
-									state <= STATE_IDLE_0;	
-								end
-				endcase
+							7'b0111111:
+`else							
+				case({swId, swShow})
+							2'b01:
 `endif
+							begin
+								if (!singleQuery)									//первое срабатываение автомата
+									begin
+										begin
+											stateFSM 		<= STATE_GET_ID_11;	//переходим в режим установки передаваемых по шине I2C значений
+											singleQuery	<= 1'b1;
+										end
+								end
+							end
+`ifdef FULL_QUERY_BMP180						
+							7'b1111110:
+`else	
+							2'b10:
+`endif
+							begin
+								stateFSM <= STATE_PREPARE_SHOW_61;	
+							end
+				endcase
+
 				lastSended		<= 1'b0;
 				lastReceived	<= 1'b0;
 				pOut				<= NULL_8;
@@ -172,30 +181,30 @@ else
 				data[8:0]	<=	{START,ADR,!READ};
 				data[17:9]	<=	{!START,ADR_ID};
 				data[26:18]	<=	{RESTART,ADR, READ};
-				state 		<= STATE_WAIT_READY_12;		//переходим в режим ожидания готовности автомата I2C
+				stateFSM 		<= STATE_WAIT_READY_12;		//переходим в режим ожидания готовности автомата I2C
 				pData			<= 8'd0;
 				pCommand 	<= 2'd2;	
 			end		
 			STATE_WAIT_READY_12:begin						//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
 				if (isReady) 
 				begin						
-					state 	<= STATE_UNLOCK_DATA_SEND_20;
+					stateFSM 	<= STATE_UNLOCK_DATA_SEND_20;
 				end
 			end
 			
 			STATE_UNLOCK_DATA_SEND_20,
 			STATE_GEN_SEND_23:begin			//разрешаем данные для обработки и формируем сигнал start если он задан				
 													//генерируем сигнал новой порции данных
-					state 	<= STATE_PREPARE_SEND_21;
+					stateFSM 	<= STATE_PREPARE_SEND_21;
 			end
 			STATE_PREPARE_SEND_21:begin						//дожидаемся ответа от i2c мастера что данные переданы и он готов обработать новую порцию данных
 				case ({lastSended,sended})					//сравниваем состояния сигнала уведомления 
 					2'b01: begin
-								state 	<= STATE_GEN_SEND_23;										
+								stateFSM 	<= STATE_GEN_SEND_23;										
 								pCommand <= pCommand - 2'd1;										
 							 end
 					2'b10: begin
-								state 	<= STATE_SEND_22;																		
+								stateFSM 	<= STATE_SEND_22;																		
 							 end
 				endcase
 				lastSended <= sended;
@@ -205,23 +214,23 @@ else
 						begin
 							//если данные принимаются то переходим в режим приема данных. 
 							//При этом от масетра придет должен прийти сигнал Sended, на который мы должны ответить сигналом прима данных
-							state <= STATE_PREPARE_SEND_TO_GET_30;   	
+							stateFSM <= STATE_PREPARE_SEND_TO_GET_30;   	
 						end
 					else 	
-						state <= STATE_UNLOCK_DATA_SEND_20;
+						stateFSM <= STATE_UNLOCK_DATA_SEND_20;
 			end
 			
 			STATE_PREPARE_SEND_TO_GET_30,
 			STATE_GEN_RECEIVE_32:begin
-					state 	<= STATE_SEND_TO_GET_31;
+					stateFSM 	<= STATE_SEND_TO_GET_31;
 			end
 			STATE_SEND_TO_GET_31:begin
 				case ({lastSended,sended})				//сравниваем состояния сигнала уведомления 
 					2'b01: begin
-								state 	<= STATE_GEN_RECEIVE_32;	
+								stateFSM 	<= STATE_GEN_RECEIVE_32;	
 							 end
 					2'b10: begin
-								state 	<= STATE_PREPARE_GET_40;																		
+								stateFSM 	<= STATE_PREPARE_GET_40;																		
 							 end
 				endcase				
 				lastSended <= sended;	
@@ -230,54 +239,50 @@ else
 	
 			STATE_PREPARE_GET_40,
 			STATE_GEN_RECEIVE_42:begin
-					state 	<= STATE_GET_41;
+					stateFSM 	<= STATE_GET_41;
 			end		
 			STATE_GET_41:begin
 				case ({lastReceived,received})				//сравниваем состояния сигнала уведомления 
 					2'b01: begin
 								if (pData == 8'h00)
-										state <= STATE_PREPARE_GET_40;
+										stateFSM <= STATE_PREPARE_GET_40;
 								else 
 									begin
-										state <= STATE_GEN_RECEIVE_42;	
+										stateFSM <= STATE_GEN_RECEIVE_42;	
 										pData <= pData - 8'd1;	
 									end
 							 end
 					2'b10: begin
-								state 	<= STATE_END_43;																		
+								stateFSM 	<= STATE_END_43;																		
 							 end
 				endcase				
 				lastReceived	<= received;	
 			end
 			STATE_END_43:begin
 					if (pData == 8'h00)
-						state <= STATE_IDLE_0;
+						stateFSM <= STATE_IDLE_0;
 					else 	
-						state <= STATE_GET_41;
+						stateFSM <= STATE_GET_41;
 			end
-`ifdef FULL_QUERY_BMP180			
-			STATE_SHOW_63: begin
-				if (!swShow) 
+			STATE_PREPARE_SHOW_61:begin
+					if (swShow)
 					begin
-						if(delayFSM == DELAY_SW_SHOW) 
-							begin
-								if (pOut==MAX_DATA)
-									begin
-										state 	<= STATE_IDLE_0;
-									end
-								else	
-									begin
-										pOut 		<= pOut + 8'd1;
-										delayFSM <= NULL_16;
-									end
-							end
-						else
-							delayFSM <= delayFSM + 8'd1;
+						pOut 		<= pOut + 8'd1;
+						stateFSM <= STATE_SHOW_62;
 					end
-				else
-					delayFSM <= 16'd0;
 			end
-`endif
+			STATE_SHOW_62: begin
+					if (!swShow)
+					begin
+						stateFSM <= (pOut == MAX_DATA) ? STATE_SHOW_END_63 : STATE_PREPARE_SHOW_61;
+					end
+			end
+			STATE_SHOW_END_63: begin
+					if (swShow)
+					begin
+						stateFSM <= STATE_IDLE_0;
+					end
+			end
 		endcase
 	end	
 end
@@ -295,7 +300,7 @@ begin
 		end
 	else
 		begin
-			case (state)	
+			case (stateFSM)	
 				STATE_IDLE_0:begin					
 						lockDataSend	<= 1'b1;				//сброс шины данных
 						lockStart		<= 1'b1;				//сброс бита start
@@ -324,7 +329,7 @@ begin
 				STATE_PREPARE_GET_40,
 				STATE_GET_41,
 				STATE_END_43,
-				STATE_SHOW_63:begin
+				STATE_SHOW_62:begin
 						lockSend		<= 1'b1;
 						lockReceive	<= 1'b1;
 				end			
@@ -342,11 +347,11 @@ begin
 		end 
 end	
 
-always@(posedge received or negedge reset )
+always@(posedge clk or negedge reset )
 begin
 	if(!reset)
 		begin
-			for(i=0;i<(MAX_DATA+1);i=i+1)
+			for(i=0;i<=MAX_DATA;i=i+1)
 				Data[i] = NULL_8;
 		end
 	else
