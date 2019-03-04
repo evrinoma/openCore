@@ -94,6 +94,7 @@ localparam ONE8						= 8'd1;
 //clkScl 100kHz clk 25Mhz
 localparam QUARTER8					= 8'd62;
 localparam HALF8						= 8'd124;
+localparam STRETCH_2					= 8'd2;
 
 
 assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
@@ -462,7 +463,7 @@ begin
 			
 			
 			STATE_PREPARE_SEND_21: begin
-				if (delay == HALF8)
+				if (delay == HALF8-STRETCH_2)
 					begin 
 						stateScl <= STATE_PREPARE_SEND_21;
 						delay <= ZERO8;
@@ -472,7 +473,7 @@ begin
 				zscl	<= 1'b0;
 			end	
 			STATE_WAIT_GEN_ACK_32: begin		
-				if (delay == HALF8) 
+				if (delay == HALF8-STRETCH_2) 
 					begin 
 						stateScl <= STATE_WAIT_GEN_ACK_32;
 						delay <= ZERO8;
@@ -482,7 +483,7 @@ begin
 				zscl	<= 1'b0;
 			end
 			STATE_WAIT_ACK_31: begin
-				if (delay == HALF8) 
+				if (delay == HALF8-STRETCH_2) 
 					begin 
 						stateScl <= STATE_WAIT_ACK_31;
 						delay <= ZERO8;
@@ -492,7 +493,7 @@ begin
 				zscl	<= 1'b0;
 			end
 			STATE_PREPARE_RECEIVE_41: begin
-				if (delay == HALF8)
+				if (delay == HALF8-STRETCH_2)
 					begin 
 						stateScl <= STATE_PREPARE_RECEIVE_41;
 						delay <= ZERO8;
