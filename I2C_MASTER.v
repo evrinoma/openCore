@@ -46,19 +46,26 @@ localparam STATE_START_11					= 6'd11;
 localparam STATE_WAIT_RESTART_12			= 6'd12;
 localparam STATE_RESTART_13				= 6'd13;
 
-localparam STATE_PREPARE_SEND_21			= 6'd21;//going to STATE_PREPARE_STRETCH_51 state
-localparam STATE_SEND_22					= 6'd22;
+localparam STATE_PREPARE_SEND_21			= 6'd21;
+localparam STATE_SEND_22					= 6'd22;//going to STATE_STRETCH_51 state
 
-localparam STATE_WAIT_ACK_31				= 6'd31;//going to STATE_PREPARE_STRETCH_51 state
-localparam STATE_WAIT_GEN_ACK_32			= 6'd32;
+localparam STATE_WAIT_ACK_31				= 6'd31;//going to STATE_STRETCH_53 state
+localparam STATE_WAIT_GEN_ACK_32			= 6'd32;//going to STATE_STRETCH_54 state
 localparam STATE_ACK_33						= 6'd33;
 
-localparam STATE_PREPARE_RECEIVE_41		= 6'd41;//going to STATE_PREPARE_STRETCH_51 state
-localparam STATE_RECEIVE_42				= 6'd42;
-
-localparam STATE_RECEIVE_42				= 6'd42;
+localparam STATE_PREPARE_RECEIVE_41		= 6'd41;
+localparam STATE_RECEIVE_42				= 6'd42;//going to STATE_STRETCH_57 state
 
 localparam STATE_PREPARE_STRETCH_51		= 6'd51;
+localparam STATE_STRETCH_52				= 6'd52;
+
+localparam STATE_PREPARE_STRETCH_53		= 6'd53;
+localparam STATE_STRETCH_54				= 6'd54;
+localparam STATE_PREPARE_STRETCH_55		= 6'd55;
+localparam STATE_STRETCH_56				= 6'd56;
+
+localparam STATE_PREPARE_STRETCH_57		= 6'd57;
+localparam STATE_STRETCH_58				= 6'd58;
 
 localparam STATE_STOP_63					= 6'd63;
 
@@ -189,7 +196,7 @@ begin
 			STATE_PREPARE_SEND_21: begin			//осуществляем выборку данных
 				if (stateScl == STATE_PREPARE_SEND_21) 
 					begin 								//ожидаем когда закончится этап подготовки данных
-						stateSda <= STATE_SEND_22;
+						stateSda <= STATE_PREPARE_STRETCH_51;
 						count <= count - 4'd1;		//уменьшаем счетчик передачи бит 
 					end
 				if (datasend[count] == 1)			//переключаем линию sda в ноль, если отправляемый бит равен нулю
@@ -224,7 +231,7 @@ begin
 						waitReceive <= 1'b1;
 				if (stateScl == STATE_WAIT_GEN_ACK_32) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
-						stateSda <= STATE_ACK_33;	
+						stateSda <= STATE_PREPARE_STRETCH_55;	
 						ask	<= 1'b1;							
 					end
 			end	
@@ -238,7 +245,7 @@ begin
 						waitReceive <= 1'b1;
 				if (stateScl == STATE_WAIT_ACK_31) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
-						stateSda <= STATE_ACK_33;
+						stateSda <= STATE_PREPARE_STRETCH_53;
 						ask	<= 1'b1;	
 					end
 			end
@@ -291,7 +298,7 @@ begin
 			STATE_PREPARE_RECEIVE_41: begin	//осуществляем считывание данных с ведомого
 				if (stateScl == STATE_PREPARE_RECEIVE_41) 
 					begin 						//ожидаем когда закончится этап подготовки данных ведомым
-						stateSda <= STATE_RECEIVE_42;
+						stateSda <= STATE_PREPARE_STRETCH_57;
 						receivedBit<= 1'b1;
 					end
 				zsda	<= 1'b1;
@@ -318,7 +325,60 @@ begin
 						receivedBit<= 1'b0;
 					end
 				zsda	<= 1'b1;
+			end	
+
+			STATE_PREPARE_STRETCH_51: begin
+				if (stateScl == STATE_PREPARE_STRETCH_51) 
+				begin
+					stateSda <= STATE_STRETCH_52;
+				end
+			end
+			STATE_STRETCH_52: begin
+				if (stateScl == STATE_PREPARE_SEND_21) 
+				begin
+					stateSda <= STATE_SEND_22;
+				end
+			end
+			
+			STATE_PREPARE_STRETCH_53: begin
+				if (stateScl == STATE_PREPARE_STRETCH_53) 
+				begin
+					stateSda <= STATE_STRETCH_54;
+				end
+			end
+			STATE_STRETCH_54: begin
+				if (stateScl == STATE_WAIT_ACK_31) 
+				begin
+					stateSda <= STATE_ACK_33;
+				end
 			end		
+			
+			STATE_PREPARE_STRETCH_55: begin
+				if (stateScl == STATE_PREPARE_STRETCH_55) 
+				begin
+					stateSda <= STATE_STRETCH_56;
+				end
+			end
+			STATE_STRETCH_56: begin
+				if (stateScl == STATE_WAIT_GEN_ACK_32) 
+				begin
+					stateSda <= STATE_ACK_33;
+				end
+			end	
+			
+			STATE_PREPARE_STRETCH_57: begin
+				if (stateScl == STATE_PREPARE_STRETCH_57) 
+				begin
+					stateSda <= STATE_STRETCH_58;
+				end
+			end
+			STATE_STRETCH_58: begin
+				if (stateScl == STATE_PREPARE_RECEIVE_41) 
+				begin
+					stateSda <= STATE_RECEIVE_42;
+				end
+			end
+		
 			STATE_STOP_63: begin	
 				if (stateScl == STATE_IDLE_0)
 					begin
@@ -472,7 +532,33 @@ begin
 					delay <= delay + ONE8;
 				zscl	<= 1'b1;
 			end
-			
+
+			 
+			STATE_PREPARE_STRETCH_51: begin
+				stateScl <= STATE_PREPARE_STRETCH_51;
+			end
+			STATE_STRETCH_52: begin
+				stateScl <= STATE_PREPARE_SEND_21;
+			end			
+			STATE_PREPARE_STRETCH_53: begin
+				stateScl <= STATE_PREPARE_STRETCH_53;
+			end
+			STATE_STRETCH_54: begin
+				stateScl <= STATE_WAIT_ACK_31;
+			end			
+			STATE_PREPARE_STRETCH_55: begin
+				stateScl <= STATE_PREPARE_STRETCH_55;
+			end
+			STATE_STRETCH_56: begin
+				stateScl <= STATE_WAIT_GEN_ACK_32;
+			end			
+			STATE_PREPARE_STRETCH_57: begin
+				stateScl <= STATE_PREPARE_STRETCH_57;
+			end
+			STATE_STRETCH_58: begin
+				stateScl <= STATE_PREPARE_RECEIVE_41;
+			end
+
 			endcase
 		end
 end
