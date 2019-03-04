@@ -534,30 +534,59 @@ begin
 				zscl	<= 1'b1;
 			end
 
+			
+//			STATE_PREPARE_STRETCH_51: begin
+//				if (stateScl == STATE_PREPARE_STRETCH_51) 
+//				begin
+//					stateSda <= STATE_STRETCH_52;
+//				end
+//			end
+//			STATE_STRETCH_52: begin
+//				if (stateScl == STATE_PREPARE_SEND_21) 
+//				begin
+//					stateSda <= STATE_SEND_22;
+//				end
+//			end
 			 
 			STATE_PREPARE_STRETCH_51: begin
 				stateScl <= STATE_PREPARE_STRETCH_51;
+				zscl	<= 1'b1;
 			end
 			STATE_STRETCH_52: begin
-				stateScl <= STATE_PREPARE_SEND_21;
+				if (scl == 1'b1) 
+					begin
+						stateScl <= STATE_PREPARE_SEND_21;
+					end
 			end			
 			STATE_PREPARE_STRETCH_53: begin
 				stateScl <= STATE_PREPARE_STRETCH_53;
+				zscl	<= 1'b1;
 			end
 			STATE_STRETCH_54: begin
-				stateScl <= STATE_WAIT_ACK_31;
+				if (scl == 1'b1) 
+					begin
+						stateScl <= STATE_WAIT_ACK_31;
+					end
 			end			
 			STATE_PREPARE_STRETCH_55: begin
 				stateScl <= STATE_PREPARE_STRETCH_55;
+				zscl	<= 1'b1;
 			end
 			STATE_STRETCH_56: begin
-				stateScl <= STATE_WAIT_GEN_ACK_32;
+				if (scl == 1'b1) 
+					begin
+						stateScl <= STATE_WAIT_GEN_ACK_32;
+					end
 			end			
 			STATE_PREPARE_STRETCH_57: begin
 				stateScl <= STATE_PREPARE_STRETCH_57;
+				zscl	<= 1'b1;
 			end
 			STATE_STRETCH_58: begin
-				stateScl <= STATE_PREPARE_RECEIVE_41;
+				if (scl == 1'b1) 
+					begin
+						stateScl <= STATE_PREPARE_RECEIVE_41;
+					end
 			end
 
 			endcase
