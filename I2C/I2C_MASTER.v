@@ -534,20 +534,6 @@ begin
 				zscl	<= 1'b1;
 			end
 
-			
-//			STATE_PREPARE_STRETCH_51: begin
-//				if (stateScl == STATE_PREPARE_STRETCH_51) 
-//				begin
-//					stateSda <= STATE_STRETCH_52;
-//				end
-//			end
-//			STATE_STRETCH_52: begin
-//				if (stateScl == STATE_PREPARE_SEND_21) 
-//				begin
-//					stateSda <= STATE_SEND_22;
-//				end
-//			end
-			 
 			STATE_PREPARE_STRETCH_51: begin
 				stateScl <= STATE_PREPARE_STRETCH_51;
 				zscl	<= 1'b1;
