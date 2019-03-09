@@ -15,30 +15,35 @@ input	wire receive;				//принять новую порцию данных д�
 output reg[7:0] datareceive;	//регистр принятых данных по шине - полученый байт
 output wire received;				//готовность полученого байта для выгрузки
 
-//assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
-//assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
-//
-//always@(posedge clk)
-//begin
-//	if (!reset)
-//		begin
-//			stateSda	<= STATE_IDLE_0;
-//			
-//			zsda	<= 1'b1;
-//			zscl	<= 1'b1;
-//		end
-//	else
-//		begin
-//			case (stateSda)
-//				STATE_IDLE_0: begin
-//				//wait start transaction sda scl lines
-//				end
-//				STATE_IS_START: begin
-//				
-//				end
-//				endcase
-//		end
-//end
+reg zsda	= 1'b1;						//первод лини sda в состояние Z
+reg zscl	= 1'b1;						//первод лини scl в состояние Z
+reg[5:0] stateSda;				//состояние линии sda
+reg[5:0] stateScl;				//состояние линии scl
+
+assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
+assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
+
+always@(posedge clk)
+begin
+	if (!reset)
+		begin
+			stateSda	<= STATE_IDLE_0;
+			
+			zsda	<= 1'b1;
+			zscl	<= 1'b1;
+		end
+	else
+		begin
+			case (stateSda)
+				STATE_IDLE_0: begin
+				//wait start transaction sda scl lines
+				end
+				STATE_START_11: begin
+				
+				end
+				endcase
+		end
+end
 			
 
 endmodule
