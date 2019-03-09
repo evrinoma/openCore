@@ -1,7 +1,9 @@
 module I2C_SLAVE(clk, reset, sda, scl, send, datasend, sended, receive, datareceive, received);
+
+`include "I2C.vh"
+
 input wire clk;					//сигнал тактовой частоты
 input wire reset;					//сигнал сброса
-output wire ready;				//готовность контроллера I2C
 inout sda;							//линия передачи данных I2C 
 inout scl;							//сигнал тактирования I2C
 
@@ -13,30 +15,30 @@ input	wire receive;				//принять новую порцию данных д�
 output reg[7:0] datareceive;	//регистр принятых данных по шине - полученый байт
 output wire received;				//готовность полученого байта для выгрузки
 
-assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
-assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
-
-always@(posedge clk)
-begin
-	if (!reset)
-		begin
-			stateSda	<= STATE_IDLE_0;
-			
-			zsda	<= 1'b1;
-			zscl	<= 1'b1;
-		end
-	else
-		begin
-			case (stateSda)
-				STATE_IDLE_0: begin
-				//wait start transaction sda scl lines
-				end
-				STATE_IS_START: begin
-				
-				end
-				endcase
-		end
-end
+//assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
+//assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
+//
+//always@(posedge clk)
+//begin
+//	if (!reset)
+//		begin
+//			stateSda	<= STATE_IDLE_0;
+//			
+//			zsda	<= 1'b1;
+//			zscl	<= 1'b1;
+//		end
+//	else
+//		begin
+//			case (stateSda)
+//				STATE_IDLE_0: begin
+//				//wait start transaction sda scl lines
+//				end
+//				STATE_IS_START: begin
+//				
+//				end
+//				endcase
+//		end
+//end
 			
 
 endmodule
