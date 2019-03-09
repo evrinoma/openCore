@@ -32,3 +32,11 @@
 !RS232/*.qsf
 !RS232/*.qpf
 !RS232/*.logicdata
+!UTILS/*.v
+!UTILS/*.vt
+!UTILS/*.bdf
+!UTILS/*.bsf
+!UTILS/*.csv
+!UTILS/*.qsf
+!UTILS/*.qpf
+!UTILS/*.logicdata
