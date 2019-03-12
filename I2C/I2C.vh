@@ -1,4 +1,5 @@
-//состояния
+//states
+//MASTER
 localparam STATE_IDLE_0						= 6'd0;
 localparam STATE_START_11					= 6'd11;
 localparam STATE_WAIT_RESTART_12			= 6'd12;

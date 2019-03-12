@@ -85,7 +85,7 @@ begin
 			lockReceived	<= 1'b0;
 			
 			count 			<= 4'd7;
-			datareceive 	<= 8'd0;
+			datareceive 	<= ZERO8;
 			waitSend			<= 1'b0;
 			waitReceive		<= 1'b0;
 			
