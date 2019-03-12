@@ -20,12 +20,16 @@ localparam STATE_STRETCH_56				= 6'd56;
 localparam STATE_PREPARE_STRETCH_57		= 6'd57;
 localparam STATE_STRETCH_58				= 6'd58;
 localparam STATE_STOP_63					= 6'd63;
+//SLAVE
+localparam SLAVE_ADDRESS					= 7'd42;//0101010 address slave 
+localparam SLAVE_ADDRESS_CHIP_ID			= 8'hD0;//address chipId 
+localparam SLAVE_CHIP_ID					= 8'h55;//chipId slave 
 
 //const counter
-localparam ZERO8						= 8'd0;
-localparam ONE8						= 8'd1;
+localparam ZERO8								= 8'd0;
+localparam ONE8								= 8'd1;
 
 //counter delay
-localparam QUARTER8					= 8'd62;
-localparam HALF8						= 8'd124;
-localparam STRETCH_2					= 8'd2;
+localparam QUARTER8							= 8'd62;
+localparam HALF8								= 8'd124;
+localparam STRETCH_2							= 8'd2;
