@@ -1,6 +1,12 @@
 `timescale 10 ns/ 10 ps
 module I2C_BMP180_vlg_tst();
 
+`ifdef FULL_BMP180
+	`define FULL_QUERY_BMP180
+`else 
+	`undef FULL_QUERY_BMP180
+`endif
+
 // test vector input registers
 reg clk;
 reg reset;

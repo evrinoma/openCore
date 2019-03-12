@@ -1,5 +1,11 @@
 `timescale 10 ns/ 10 ps
 module BMP180_vlg_tst();
+
+`ifdef FULL_BMP180
+	`define FULL_QUERY_BMP180
+`else 
+	`undef FULL_QUERY_BMP180
+`endif
 // constants                                           
 // general purpose registers
 reg eachvec;
@@ -11,12 +17,15 @@ reg received;
 reg sended;
 reg reset;
 reg swId;
-reg swSettings;
-reg swTemp;
-reg swPress;
-reg swGTemp;
-reg swGPress;
 reg swShow;
+`ifdef FULL_QUERY_BMP180
+	reg swSettings;
+	reg swTemp;
+	reg swPress;
+	reg swGTemp;
+	reg swGPress;
+`endif	
+
 // wires                                               
 wire [7:0]  datasend;
 wire start;
@@ -25,29 +34,30 @@ wire receive;
 wire send;
 
 
-// assign statements (if any)                          
-BMP180 i1 (
+BMP180 BMP180 (
 // port map - connection between master ports and signals/registers   
-	.clk(clk),
+	.clk(clk), //
 	.datareceive(datareceive),
-	.datasend(datasend),
-	.isReady(isReady),
-	.out(out),
+	.datasend(datasend), 
 	.receive(receive),
 	.received(received),
-	.reset(reset),
 	.send(send),
 	.sended(sended),
 	.start(start),
-	.swGPress(swGPress),
-	.swGTemp(swGTemp),
-	.swId(swId),
-	.swPress(swPress),
-	.swSettings(swSettings),
-	.swShow(swShow),
-	.swTemp(swTemp)
+	.swId(swId), 
+	.swShow(swShow), 
+	.reset(reset),
+	`ifdef FULL_QUERY_BMP180
+		.swPress(swPress), 
+		.swGTemp(swGTemp), 
+		.swGPress(swGPress), 
+		.swSettings(swSettings),
+		.swTemp(swTemp), 
+	`endif
+	.isReady(ready),
+	.out(out), 
+	.state(state)
 );
-
 
 always
 begin
@@ -67,12 +77,14 @@ begin
 			#0
 			clk = 1'b0; 
 			swId = 1'b1;
-			swShow = 1'b1;
+			swShow = 1'b1;		
+		`ifdef FULL_QUERY_BMP180
 			swGPress = 1'b1;
 			swGTemp = 1'b1;
 			swPress = 1'b1;
 			swSettings = 1'b1;
 			swTemp = 1'b1;
+		`endif
 	end
 end
 

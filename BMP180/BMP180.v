@@ -1,5 +1,7 @@
-`ifndef FULL_QUERY_BMP180
+`ifdef FULL_BMP180
 	`define FULL_QUERY_BMP180
+`else 
+	`undef FULL_QUERY_BMP180
 `endif
 module BMP180(
 	swId, 

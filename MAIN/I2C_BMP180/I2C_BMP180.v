@@ -2,8 +2,11 @@
 `define WITH_DEBOUNCE
 `undef WITH_DEBOUNCE
 
-`define FULL_QUERY_BMP180
-`undef FULL_QUERY_BMP180
+`ifdef FULL_BMP180
+	`define FULL_QUERY_BMP180
+`else 
+	`undef FULL_QUERY_BMP180
+`endif
 
 module I2C_BMP180(
 	receive,

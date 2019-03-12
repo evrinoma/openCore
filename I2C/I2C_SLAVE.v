@@ -20,6 +20,8 @@ reg zscl	= 1'b1;						//первод лини scl в состояние Z
 reg[5:0] stateSda;				//состояние линии sda
 reg[5:0] stateScl;				//состояние линии scl
 
+reg lastSda	= 1'b1;
+
 assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 
@@ -29,6 +31,7 @@ begin
 		begin
 			stateSda	<= STATE_IDLE_0;
 			
+			lastSda <= 1'b1;
 			zsda	<= 1'b1;
 			zscl	<= 1'b1;
 		end
@@ -37,6 +40,16 @@ begin
 			case (stateSda)
 				STATE_IDLE_0: begin
 				//wait start transaction sda scl lines
+					case ({lastSda,sda})
+					2'b01: begin
+									stateSda 	<= STATE_IDLE_0;	
+							 end
+					2'b10: begin
+								if (scl)
+									stateSda 	<= STATE_START_11;																		
+							 end
+					endcase
+					lastSda <= sda;		
 				end
 				STATE_START_11: begin
 				
