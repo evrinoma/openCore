@@ -54,7 +54,7 @@ BMP180 BMP180 (
 		.swSettings(swSettings),
 		.swTemp(swTemp), 
 	`endif
-	.isReady(ready),
+	.isReady(isReady),
 	.out(out), 
 	.state(state)
 );
@@ -143,12 +143,12 @@ begin
 #0		->EVENT_INIT;
 #500	->EVENT_RESET;
 #1500	->EVENT_SW_ID;
-#1000 ->EVENT_SENDED;	
-#1000 ->EVENT_SENDED;
-#1000 ->EVENT_SENDED;
-#1000 ->EVENT_RECEIVED;
-#1000 ->EVENT_RECEIVED;
-#1000 ->EVENT_RECEIVED;
+#5000 ->EVENT_SENDED;	
+#5000 ->EVENT_SENDED;
+#5000 ->EVENT_SENDED;
+#5000 ->EVENT_RECEIVED;
+#5000 ->EVENT_RECEIVED;
+#5000 ->EVENT_RECEIVED;
 #10000 $stop;
 end
                                                    
