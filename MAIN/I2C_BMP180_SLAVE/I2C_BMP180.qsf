@@ -64,12 +64,6 @@ set_global_assignment -name EDA_TEST_BENCH_NAME I2C_BMP180 -section_id eda_simul
 set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id I2C_BMP180
 set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME I2C_BMP180_vlg_tst -section_id I2C_BMP180
 set_global_assignment -name ENABLE_DRC_SETTINGS ON
-set_global_assignment -name EDA_TEST_BENCH_NAME SINGLE_GENERATOR -section_id eda_simulation
-set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id SINGLE_GENERATOR
-set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME SINGLE_GENERATOR_vlg_tst -section_id SINGLE_GENERATOR
-set_global_assignment -name EDA_TEST_BENCH_NAME BMP180_LOW_PACK -section_id eda_simulation
-set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id BMP180_LOW_PACK
-set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME BMP180_LOW_PACK_vlg_tst -section_id BMP180_LOW_PACK
 set_location_assignment PIN_23 -to clk
 set_location_assignment PIN_77 -to sda
 set_location_assignment PIN_76 -to scl
@@ -77,9 +71,6 @@ set_location_assignment PIN_88 -to reset
 set_location_assignment PIN_30 -to ready
 set_location_assignment PIN_24 -to swId
 set_location_assignment PIN_31 -to received
-set_global_assignment -name EDA_TEST_BENCH_NAME BMP180 -section_id eda_simulation
-set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id BMP180
-set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME BMP180_vlg_tst -section_id BMP180
 set_instance_assignment -name IO_STANDARD "2.5 V" -to clk
 set_instance_assignment -name IO_STANDARD "2.5 V" -to out
 set_location_assignment PIN_66 -to state[5]
@@ -90,22 +81,10 @@ set_location_assignment PIN_59 -to state[1]
 set_location_assignment PIN_58 -to state[0]
 set_location_assignment PIN_38 -to send
 set_location_assignment PIN_39 -to receive
-set_global_assignment -name EDA_TEST_BENCH_NAME debounce -section_id eda_simulation
-set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id debounce
-set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME debounce_vlg_tst -section_id debounce
-set_global_assignment -name EDA_TEST_BENCH_NAME debounce_single -section_id eda_simulation
-set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id debounce_single
-set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME debounce_single_vlg_tst -section_id debounce_single
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_location_assignment PIN_67 -to pinout
-set_global_assignment -name EDA_TEST_BENCH_FILE I2C_BMP180.vt -section_id I2C_BMP180
-set_global_assignment -name EDA_TEST_BENCH_FILE SINGLE_GENERATOR.vt -section_id SINGLE_GENERATOR
-set_global_assignment -name EDA_TEST_BENCH_FILE BMP180_LOW_PACK.vt -section_id BMP180_LOW_PACK
-set_global_assignment -name EDA_TEST_BENCH_FILE BMP180.vt -section_id BMP180
-set_global_assignment -name EDA_TEST_BENCH_FILE DEBOUNCE.vt -section_id debounce
-set_global_assignment -name EDA_TEST_BENCH_FILE DEBOUNCE_SINGLE.vt -section_id debounce_single
 set_location_assignment PIN_144 -to out[7]
 set_location_assignment PIN_143 -to out[6]
 set_location_assignment PIN_142 -to out[5]
@@ -124,3 +103,4 @@ set_global_assignment -name VERILOG_FILE ../../BMP180/BMP180.v
 set_global_assignment -name SOURCE_FILE I2C_BMP180.qpf
 set_global_assignment -name VERILOG_TEST_BENCH_FILE I2C_BMP180.vt
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name EDA_TEST_BENCH_FILE I2C_BMP180.vt -section_id I2C_BMP180
