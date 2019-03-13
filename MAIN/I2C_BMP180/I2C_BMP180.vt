@@ -260,6 +260,7 @@ begin
 			#500	->EVENT_SCL;
 			#500	->EVENT_SCL;
 			#500	->EVENT_SCL;
+			#500	->EVENT_SCL;
 	end
 end
 
