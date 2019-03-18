@@ -102,8 +102,8 @@ reg 			lockSend;
 reg 			lockReceive;
 
 //мапинг ренистра data к примеру посылка чтения ID чипа 
-//08 07 06 05 04 03 02 01 00
-//S  D6 D5 D4 D3 D2 D1 D0 R/W
+//	 08 07 06 05 04 03 02 01 00
+//  S  D6 D5 D4 D3 D2 D1 D0 R/W
 //  26   25 24 23 22 21 20 19  18  
 //[ S]  [ADR                ]  [R]  
 //  17   16 15 14 13 12 11 10  09
@@ -180,10 +180,10 @@ else
 				pOut				<= NULL_8;
 			end
 			STATE_GET_ID_11: begin							//собираем посылку, устанавливаем указатель передачи и устнавливаем указатель на буфер принятых данных число принимаемых байт
+				stateFSM 	<= STATE_WAIT_READY_12;		//переходим в режим ожидания готовности автомата I2C
 				data[8:0]	<=	{START,ADR,!READ};
 				data[17:9]	<=	{!START,ADR_ID};
-				data[26:18]	<=	{RESTART,ADR, READ};
-				stateFSM 		<= STATE_WAIT_READY_12;		//переходим в режим ожидания готовности автомата I2C
+				data[26:18]	<=	{RESTART,ADR, READ};				
 				pData			<= 8'd0;
 				pCommand 	<= 2'd2;	
 			end		
