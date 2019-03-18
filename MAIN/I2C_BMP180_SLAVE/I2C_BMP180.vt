@@ -151,7 +151,6 @@ begin
 			en_sda = 1'b0;
 	end
 end
-
 	
 initial 
 begin
@@ -251,6 +250,7 @@ begin
 			#2		->EVENT_ACK;
 			#400	->EVENT_GENERATE_ID;
 			#98	->EVENT_SCL;
+			#500	->EVENT_SCL;
 			#500	->EVENT_SCL;
 			#500	->EVENT_SCL;
 			#500	->EVENT_SCL;
