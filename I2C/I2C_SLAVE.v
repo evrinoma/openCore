@@ -49,6 +49,7 @@ begin
 			datareceive <= ZERO8;	
 			lockReceived	<= 1'b1;	
 			lockSended	<= 1'b1;	
+			count <= COUNT_MAX4;
 		end
 	else
 		begin
@@ -83,7 +84,7 @@ begin
 						if (count == 4'h0) 			
 							begin
 								stateSda <= STATE_WAIT_GEN_ACK_32;												
-								count <= 4'd7;
+								count <= COUNT_MAX4;
 							end
 						else
 							begin
@@ -118,7 +119,7 @@ begin
 					if (count == 4'h0) 			
 						begin
 							stateSda <= STATE_WAIT_ACK_31;
-							count <= 4'd7;
+							count <= COUNT_MAX4;
 						end
 					else
 						begin
@@ -133,8 +134,7 @@ begin
 					lockSended	<= 1'b1;	
 				end
 				STATE_WAIT_ACK_31: begin							
-					if (stateScl == STATE_SEND_22) 
-						stateSda <= STATE_PREPARE_SEND_21;
+				
 					lockSended	<= 1'b1;	
 				end
 			endcase
