@@ -25,7 +25,7 @@ reg[5:0] saveSda;					//состояние линии sda
 reg[5:0] stateScl;				//состояние линии scl
 reg[6:0] devAddress = SLAVE_ADDRESS;	//регистр адреса устройства
 reg[7:0] send = ZERO8;			//адрес и данные, которые шлем в устройство,  а так же тут задаем тип операции - чтения или записи данных
-
+reg[7:0]	delay;					//делитель входной частоты
 
 reg lastSda	= 1'b1;
 reg lastScl	= 1'b1;
@@ -55,24 +55,39 @@ begin
 		begin
 			case (stateSda)
 				STATE_IDLE_0: begin							//поумолчанию переходим в режим ожидания старта транзакции
-					stateSda <= STATE_START_11;
-					saveSda <= STATE_START_11;
+					stateSda <= STATE_WAIT_START_10;					
 					lastSda <= 1'b1;
 					zsda	<= 1'b1;
 				end
-				STATE_START_11: begin 						//как только линия sda просела в ноль, и при этом на линии scl высокий уровень - переходим в режим ожидания приема адреса и бита операции 
+				STATE_WAIT_START_10: begin 						//как только линия sda просела в ноль, и при этом на линии scl высокий уровень - переходим в режим ожидания приема адреса и бита операции 
 					if (scl)
 						begin
-							case ({lastSda,sda})			
-							2'b10: begin 									
-										stateSda <= STATE_PREPARE_RECEIVE_41;
-									 end
-							2'b01: begin 								
-										stateSda <= STATE_STOP_63;
-									 end
-							endcase				
-							lastSda <= sda;
+							if (stateScl == STATE_WAIT_START_10) 
+							begin
+								case ({lastSda,sda})	
+								2'b10: begin 									
+											stateSda <= STATE_START_11;
+										 end
+								2'b01: begin 								
+											stateSda <= STATE_STOP_63;
+										 end
+								endcase
+							end
 						end
+					lastSda <= sda;
+				end
+				STATE_START_11: begin					
+					if (scl & !sda )
+						begin
+							if (stateScl == STATE_START_11) 
+								begin
+									stateSda <= STATE_PREPARE_RECEIVE_41;
+									lastSda <= 1'b1;
+								end
+							saveSda <= STATE_START_11;
+						end
+					else
+						stateSda <= STATE_IDLE_0;
 				end
 				STATE_PREPARE_RECEIVE_41: begin
 					if (stateScl == STATE_RECEIVE_42) 
@@ -148,15 +163,29 @@ begin
 			stateScl <= STATE_IDLE_0;
 			lastScl <= 1'b1;
 			zscl	<= 1'b1;
+			delay <= ZERO8;
 		end
 	else
 		begin
-			case (stateSda)		
+				case (stateSda)		
 				STATE_IDLE_0: begin
 					stateScl <= STATE_IDLE_0;
+					delay <= ZERO8;
 					lastScl <= 1'b1;
 					zscl	<= 1'b1;
-				end		
+				end
+				STATE_WAIT_START_10: begin
+					stateScl <= STATE_WAIT_START_10;
+				end
+				STATE_START_11: begin
+					if (delay == QUARTER8) 
+						begin 
+							stateScl <= STATE_START_11;
+							delay <= ZERO8;
+						end
+					else 
+						delay <= delay + ONE8;
+				end
 				STATE_PREPARE_RECEIVE_41: begin		
 					if ({lastScl,scl} == 2'b01)
 						stateScl 	<= STATE_RECEIVE_42;		

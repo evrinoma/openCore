@@ -21,7 +21,8 @@ localparam STATE_PREPARE_STRETCH_57		= 6'd57;
 localparam STATE_STRETCH_58				= 6'd58;
 localparam STATE_STOP_63					= 6'd63;
 //SLAVE
-localparam SLAVE_ADDRESS					= 7'd42;//0101010 address slave 
+localparam STATE_WAIT_START_10			= 6'd10;
+localparam SLAVE_ADDRESS					= 7'd77;//1110111 address slave 
 localparam SLAVE_ADDRESS_CHIP_ID			= 8'hD0;//address chipId 
 localparam SLAVE_CHIP_ID					= 8'h55;//chipId slave 
 
