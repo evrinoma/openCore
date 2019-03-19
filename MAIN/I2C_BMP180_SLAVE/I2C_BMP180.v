@@ -146,7 +146,7 @@ BMP180 BMP180 (
 	.state(state)
 );
 
-I2C_SLAVE (
+I2C_SLAVE I2C_SLAVE (
 .clk(clk), 
 .reset(reset), 
 .sda(sda), 
