@@ -1,11 +1,22 @@
 `timescale 10 ns/ 10 ps
 module I2C_BMP180_vlg_tst();
 
+
+//wire ps2_clk;
+//wire ps2_dat;
+//   
+//pullup(ps2_clk);
+//pullup(ps2_dat);
+//
+//reg drive_ps2clk_lo;
+//reg drive_ps2dat_lo;
+//
+//assign ps2_clk = (drive_ps2clk_lo) ? 1'b0: 1'bz;
+//assign ps2_dat = (drive_ps2dat_lo) ? 1'b0: 1'bz;
+
 // test vector input registers
 reg clk;
 reg reset;
-reg treg_scl;
-reg treg_sda;
 
 reg swId;
 reg swShow;
@@ -25,20 +36,26 @@ wire ready;
 wire scl;
 wire sda;
 
+pullup(scl);
+pullup(sda);
+
 wire receive;
 wire received;
 wire send;
 wire sended;
 
-reg en_scl;
-reg en_sda;
+reg zscl;
+reg zsda;
 
 reg [7:0]data;
 reg [7:0]count;
 
 // assign statements (if any)                          
-assign scl = (en_scl) ? treg_scl : 1'bZ;
-assign sda = (en_sda) ? treg_sda : 1'bZ;
+//assign scl = (en_scl) ? treg_scl : 1'b1;//1'bZ;
+//assign sda = (en_sda) ? treg_sda : 1'b1;//1'bZ;
+
+assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
+assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 
 I2C_BMP180 ENTITY (
 	.receive(receive),
@@ -69,6 +86,7 @@ event EVENT_RESET;
 event EVENT_SW_ID;
 event EVENT_ACK;
 event EVENT_SCL;
+event EVENT_SCL_RESTART;
 event EVENT_SCL_CLOCK_STRETCH;
 event EVENT_GENERATOR_SDA_DATA;	//генератор 
 event EVENT_GENERATE_ID;			//ответ ID чипа
@@ -111,8 +129,8 @@ begin
 			swSettings = 1'b1;
 			swTemp = 1'b1;
 `endif	
-			en_scl = 1'b0;
-			en_sda = 1'b0;
+			zscl = 1'b1;
+			zsda = 1'b1;
 			reset = 1'b1;
 	end
 end
@@ -145,10 +163,9 @@ begin
 	forever begin
 		@(EVENT_ACK)
 			#0
-			en_sda = 1'b1;
-			treg_sda = 1'b0;
-			#200
-			en_sda = 1'b0;
+			zsda = 1'b0;
+			#250
+			zsda = 1'b1;
 	end
 end
 	
@@ -157,16 +174,16 @@ begin
 	forever begin
 		@(EVENT_GENERATOR_SDA_DATA)
 			#0
-			en_sda = 1'b1;
+			//zsda = 1'b1;
 			repeat(7)
 			begin				
-				treg_sda = data[count];
+				zsda = data[count] ? 1'b1: 1'b0;
 				#500
 				count = count - 1;								
 			end
-			treg_sda = data[count];
-			#450							
-			en_sda = 1'b0;
+			//zsda = data[count] ? 1'b1: 1'b0;
+			//#450
+			//zsda = 1'b1;
 	end
 end
 
@@ -186,23 +203,29 @@ begin
 	forever begin
 		@(EVENT_SCL)
 			#0
-			en_scl  = 1'b1;
-			treg_scl = 1'b1;
-			#2
-			en_scl = 1'b0;
+			zscl = 1'b0;
+			#250
+			zscl = 1'b1;
 	end
 end
 
+initial 
+begin
+	forever begin
+		@(EVENT_SCL_RESTART)
+			#0
+			zscl = 1'b1;
+	end
+end
 
 initial 
 begin
 	forever begin
 		@(EVENT_SCL_CLOCK_STRETCH)
 			#0
-			en_scl  = 1'b1;
-			treg_scl = 1'b0;
+			zscl = 1'b0;
 			#2000
-			en_scl = 1'b0;
+			zscl = 1'b1;
 			#0	->EVENT_SCL;
 	end
 end
@@ -214,50 +237,58 @@ begin
 			#0		->EVENT_INIT;
 			#500	->EVENT_RESET;
 			#1500	->EVENT_SW_ID;
-			#1011	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			//#500	->EVENT_SCL_CLOCK_STRETCH;
-			#500	->EVENT_SCL;
-			#2		->EVENT_ACK;
-			//#2002		->EVENT_ACK;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			//#500	->EVENT_SCL_CLOCK_STRETCH;
-			#500	->EVENT_SCL;
-			#2		->EVENT_ACK;
-			//#2002		->EVENT_ACK;
-			#874	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;			
-			#2		->EVENT_ACK;
-			#400	->EVENT_GENERATE_ID;
-			#98	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
-			#500	->EVENT_SCL;
+//			#760->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#125	->EVENT_ACK;
+//			#375	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#125	->EVENT_ACK;
+//			#325	->EVENT_SCL_RESTART;
+//			#250	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#125	->EVENT_ACK;
+//			
+//				//			#874	->EVENT_SCL;
+//				//			#500	->EVENT_SCL;
+//				//			#500	->EVENT_SCL;
+//				//			#500	->EVENT_SCL;
+//				//			#500	->EVENT_SCL;
+//				//			#500	->EVENT_SCL;
+//				//			#500	->EVENT_SCL;
+//				//			#500	->EVENT_SCL;
+//				//			#500	->EVENT_SCL;			
+//				//			#2		->EVENT_ACK;
+//			#400	->EVENT_GENERATE_ID;
+//			#98	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
+//			#500	->EVENT_SCL;
 	end
 end
 
