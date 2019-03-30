@@ -68,7 +68,7 @@ begin
 				STATE_WAIT_START_10:begin	
 					if ({lastSda,sda,scl} == 3'b001)
 						begin
-							if(delay == QUARTER8)
+							if(delay == EIGHTH8)
 								begin
 									stateFSM <= STATE_START_11;
 								end
@@ -86,49 +86,6 @@ begin
 			endcase	
 			lastSda <= sda;	
 		end
-	
-	
-//		if (zsda) 
-//			begin
-//				case ({lastSda,sda})	
-//				2'b10: begin 
-////							if (delay == QUARTER8)
-////								begin
-////									stateFSM <= (scl) ? STATE_START_11 : STATE_IDLE_0;
-////									delay <= ZERO8;
-////								end
-//								delay <= ZERO8;
-//								lastScl <= scl;	
-//						 end
-//				2'b00: begin 
-//							if (delay == QUARTER8)
-//								begin
-//									stateFSM <= STATE_START_11;
-//									delay <= ZERO8;
-//								end
-//							else
-//								begin
-//									lastScl <= scl;
-//									stateFSM <= STATE_IDLE_0
-//								end
-//							delay <= delay + ONE8;
-//						 end
-//				2'b01: begin 
-//							if (delay == QUARTER8)
-//								begin
-//									stateFSM <= (scl) ? STATE_STOP_63 : STATE_IDLE_0;
-//									delay <= ZERO8;
-//								end
-//						 end
-//				endcase
-//				lastSda <= sda;				
-//			end
-//		else
-//			begin
-//				lastSda <= 1'b1;
-//				delay <= ZERO8;
-//			end
-//	end
 end
 
 always@(posedge clk)
@@ -145,83 +102,97 @@ if (!reset)
 	end
 else
 	begin
-		case (stateSda)
-			STATE_IDLE_0: begin							//поумолчанию переходим в режим ожидания старта транзакции
-				stateSda <= (stateFSM == STATE_START_11) ? STATE_PREPARE_RECEIVE_ADR_43 : STATE_IDLE_0;					
+		if (stateFSM == STATE_START_11)
+			begin
+				stateSda <= STATE_PREPARE_RECEIVE_ADR_43;
 				zsda	<= 1'b1;
+				count <= COUNT_MAX4;
 			end
-			STATE_PREPARE_RECEIVE_ADR_43,
-			STATE_PREPARE_RECEIVE_41: begin
-					if (stateScl == STATE_RECEIVE_42) 
-						begin
-							stateSda <= STATE_RECEIVE_42;	
-						end
-					else if (stateScl == STATE_RECEIVE_ADR_44) 
-						begin
-							stateSda <= STATE_RECEIVE_ADR_44;	
-						end					
-					zsda	<= 1'b1;
-					lockReceived	<= 1'b1;
-			end
-			STATE_RECEIVE_ADR_44,
-			STATE_RECEIVE_42: begin						//если мы приняли все биты с 7 по 0, то устанавливаем счетчик приема бит на старший бит
-					if (count == 4'h0) 			
-						begin
-							stateSda<= (stateScl == STATE_RECEIVE_42) ? STATE_WAIT_GEN_ACK_32 : STATE_WAIT_GEN_ACK_ADR_34;
-							count <= COUNT_MAX4;
-						end
-					else
-						begin	
-							stateSda<=stateScl;
-							count <= count - 4'd1;
-						end
-					datareceive[count] <= (sda == 0) ? 1'b0: 1'b1;					
-			end
-			STATE_WAIT_GEN_ACK_ADR_34,
-			STATE_WAIT_GEN_ACK_32: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
-					if (stateScl == STATE_ACK_33)
-						begin
-							stateSda <= (datareceive[7:1] == devAddress) ? STATE_ACK_33:STATE_IDLE_0;
-							rw <= datareceive[0];
-						end
-					else
-						begin
-							lockReceived	<= 1'b0;
-						end
-						//debug
-//					if (stateScl == STATE_IDLE_0)
-//					stateSda <=STATE_IDLE_0;
-//					
-					//zsda	<= 1'b0;	
-			end
-			STATE_ACK_33: begin	
-					if (stateScl == STATE_PREPARE_RECEIVE_41 || stateScl == STATE_PREPARE_SEND_21)
-						begin
-							stateSda <= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;							
-						end
-						zsda	<= 1'b0;	
-					//zsda	<= (rw) ? 1'b1:1'b0;
-			end	
-			STATE_PREPARE_SEND_21: begin
-					if (stateScl == STATE_SEND_22) 
-						begin
-							stateSda <= STATE_SEND_22;	
-						end	
-					zsda	<= 1'b1;		
-			end
-			STATE_SEND_22: begin
-					if (count == 4'h0) 			
-						begin
-							stateSda<= (stateScl == STATE_SEND_22) ? STATE_WAIT_GEN_ACK_32 : STATE_WAIT_GEN_ACK_ADR_34;
-							count <= COUNT_MAX4;
-						end
-					else
-						begin								
-							count <= count - 4'd1;
-						end						
-					zsda =  datasend[count] ? 1'b0: 1'b1;	
-			end
-		endcase
+		else
+			begin
+				case (stateSda)
+					STATE_IDLE_0: begin							//поумолчанию переходим в режим ожидания старта транзакции
+						//stateSda <= (stateFSM == STATE_START_11) ? STATE_PREPARE_RECEIVE_ADR_43 : STATE_IDLE_0;					
+						zsda	<= 1'b1;						
+					end
+					STATE_PREPARE_RECEIVE_ADR_43,
+					STATE_PREPARE_RECEIVE_41: begin
+							if (stateScl == STATE_RECEIVE_42) 
+								begin
+									stateSda <= STATE_RECEIVE_42;	
+								end
+							else if (stateScl == STATE_RECEIVE_ADR_44) 
+								begin
+									stateSda <= STATE_RECEIVE_ADR_44;	
+								end					
+							zsda	<= 1'b1;
+							lockReceived	<= 1'b1;
+					end
+					STATE_RECEIVE_ADR_44,
+					STATE_RECEIVE_42: begin						//если мы приняли все биты с 7 по 0, то устанавливаем счетчик приема бит на старший бит
+							if (count == 4'h0) 			
+								begin
+									stateSda<= (stateScl == STATE_PREPARE_RECEIVE_41) ? STATE_WAIT_GEN_ACK_32 : STATE_WAIT_GEN_ACK_ADR_34;
+									count <= COUNT_MAX4;
+								end
+							else
+								begin	
+									stateSda<=stateScl;
+									count <= count - 4'd1;
+								end
+							datareceive[count] <= (sda == 0) ? 1'b0: 1'b1;					
+					end
+					STATE_WAIT_GEN_ACK_ADR_34: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
+							if (stateScl == STATE_ACK_33)
+								begin
+									stateSda <= (datareceive[7:1] == devAddress) ? STATE_ACK_33:STATE_IDLE_0;
+									rw <= datareceive[0];
+								end
+							else
+								begin
+									lockReceived	<= 1'b0;
+								end
+					end
+					STATE_WAIT_GEN_ACK_32: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
+							if (stateScl == STATE_ACK_33)
+								begin
+									stateSda <= STATE_ACK_33;
+									rw <= datareceive[0];
+								end
+							else
+								begin
+									lockReceived	<= 1'b0;
+								end
+					end
+					STATE_ACK_33: begin	
+							if (stateScl == STATE_PREPARE_RECEIVE_41 || stateScl == STATE_PREPARE_SEND_21)
+								begin
+									stateSda <= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;							
+								end
+								zsda	<= 1'b0;	
+					end	
+					STATE_PREPARE_SEND_21: begin
+							if (stateScl == STATE_SEND_22) 
+								begin
+									stateSda <= STATE_SEND_22;	
+								end	
+							zsda	<= 1'b1;		
+							lockReceived	<= 1'b1;
+					end
+					STATE_SEND_22: begin
+							if (count == 4'h0) 			
+								begin
+									stateSda<= (stateScl == STATE_SEND_22) ? STATE_WAIT_GEN_ACK_32 : STATE_WAIT_GEN_ACK_ADR_34;
+									count <= COUNT_MAX4;
+								end
+							else
+								begin								
+									count <= count - 4'd1;
+								end						
+							zsda =  datasend[count] ? 1'b0: 1'b1;	
+					end
+				endcase
+		end
 	end
 end
 
@@ -266,8 +237,6 @@ begin
 				STATE_WAIT_GEN_ACK_32: begin		
 					if ({lastScl,scl} == 2'b01)
 						stateScl 	<= STATE_ACK_33;	
-						//debug
-						//stateScl 	<= STATE_IDLE_0;
 					lastScl <= scl;
 				end	
 				STATE_ACK_33: begin	
@@ -293,121 +262,3 @@ begin
 		devAddress <= address;
 end	
 endmodule
-//always@(posedge clk)
-//begin
-//	if (!reset)
-//		begin
-//			stateSda	<= STATE_IDLE_0;
-//			saveSda	<= STATE_IDLE_0;
-//			lastSda <= 1'b1;
-//			zsda	<= 1'b1;			
-//			datareceive <= ZERO8;	
-//			lockReceived	<= 1'b1;	
-//			lockSended	<= 1'b1;	
-//			count <= COUNT_MAX4;
-//		end
-//	else
-//		begin
-//			case (stateSda)
-//				STATE_IDLE_0: begin							//поумолчанию переходим в режим ожидания старта транзакции
-//					stateSda <= STATE_WAIT_START_10;					
-//					lastSda <= 1'b1;
-//					zsda	<= 1'b1;
-//				end
-//				STATE_WAIT_START_10: begin 						//как только линия sda просела в ноль, и при этом на линии scl высокий уровень - переходим в режим ожидания приема адреса и бита операции 
-//					if (scl)
-//						begin
-//							if (stateScl == STATE_WAIT_START_10) 
-//							begin
-//								case ({lastSda,sda})	
-//								2'b10: begin 									
-//											stateSda <= STATE_START_11;
-//										 end
-//								2'b01: begin 								
-//											stateSda <= STATE_STOP_63;
-//										 end
-//								endcase
-//							end
-//						end
-//					lastSda <= sda;
-//				end
-//				STATE_START_11: begin					
-//					if (scl & !sda )
-//						begin
-//							if (stateScl == STATE_START_11) 
-//								begin
-//									stateSda <= STATE_PREPARE_RECEIVE_41;
-//									lastSda <= 1'b1;
-//								end
-//							saveSda <= STATE_START_11;
-//						end
-//					else
-//						stateSda <= STATE_IDLE_0;
-//				end
-//				STATE_PREPARE_RECEIVE_41: begin
-//					if (stateScl == STATE_RECEIVE_42) 
-//						stateSda <= STATE_RECEIVE_42;		
-//					zsda	<= 1'b1;
-//					lockReceived	<= 1'b1;
-//				end
-//				STATE_RECEIVE_42: begin						//если мы приняли все биты с 7 по 0, то устанавливаем счетчик приема бит на старший бит
-//						if (count == 4'h0) 			
-//							begin
-//								stateSda <= STATE_WAIT_GEN_ACK_32;												
-//								count <= COUNT_MAX4;
-//							end
-//						else
-//							begin
-//								stateSda <= STATE_PREPARE_RECEIVE_41;
-//								count <= count - 4'd1;
-//							end
-//						datareceive[count] <= (sda == 0) ? 1'b0: 1'b1;
-//				end
-//				STATE_WAIT_GEN_ACK_32: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
-//						if (datareceive[7:1] != devAddress & saveSda == STATE_START_11) //прием адреса
-//							stateSda <= STATE_IDLE_0;
-//						else										//прием байта данных
-//							begin
-//								if (saveSda == STATE_START_11)
-//									rw <= datareceive[0];
-//								else 
-//									begin
-//										lockReceived	<= 1'b0;
-//									end
-//								stateSda <= STATE_ACK_33;	
-//								saveSda <= STATE_ACK_33;						
-//							end								
-//				end
-//				STATE_ACK_33: begin							//просаживаем линию sda в ноль подтверждая присутствие на шине
-//						if (stateScl == STATE_RECEIVE_42) 
-//							begin
-//								stateSda <= (rw) ? STATE_PREPARE_SEND_21 : STATE_PREPARE_RECEIVE_41;	
-//							end
-//						zsda	<= 1'b0;
-//				end
-//				STATE_PREPARE_SEND_21: begin				//если мы передали все биты с 7 по 0, то устанавливаем счетчик приема бит на старший бит
-//					if (count == 4'h0) 			
-//						begin
-//							stateSda <= STATE_WAIT_ACK_31;
-//							count <= COUNT_MAX4;
-//						end
-//					else
-//						begin
-//							stateSda <= STATE_SEND_22;
-//							count <= count - 4'd1;
-//						end
-//					zsda <= (send[count] == 0) ? 1'b0: 1'b1;
-//				end
-//				STATE_SEND_22: begin							
-//					if (stateScl == STATE_SEND_22) 
-//						stateSda <= STATE_PREPARE_SEND_21;
-//					lockSended	<= 1'b1;	
-//				end
-//				STATE_WAIT_ACK_31: begin							
-//				
-//					lockSended	<= 1'b1;	
-//				end
-//			endcase
-//		end
-//end
-//		

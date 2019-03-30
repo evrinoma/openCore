@@ -36,6 +36,7 @@ localparam ONE8									= 8'd1;
 localparam COUNT_MAX4							= 4'd7;
 
 //counter delay
+localparam EIGHTH8								= 8'd31;
 localparam QUARTER8								= 8'd62;
 localparam HALF8									= 8'd124;
 localparam STRETCH_2								= 8'd2;
