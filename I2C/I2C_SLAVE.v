@@ -51,17 +51,18 @@ begin
 	else
 		begin
 			case (stateFSM)
-				STATE_IDLE_0:begin				
-					case ({lastSda,sda,scl})	
-					3'b101:begin 
-								stateFSM <= STATE_WAIT_START_10;
-							 end
-					3'b011:begin 
-								//стоп может быть только тогда когда ведомый не управляет шиной sda
-								if (zsda) 
-									stateFSM <= STATE_STOP_63;		
-							 end		 
-					endcase
+				STATE_IDLE_0:begin		
+					if (zsda)		//старт, рестарт или стоп может быть только тогда когда ведомый не управляет шиной sda
+						begin
+							case ({lastSda,sda,scl})	
+							3'b101:begin 
+										stateFSM <= STATE_WAIT_START_10;
+									 end
+							3'b011:begin 
+										stateFSM <= STATE_STOP_63;		
+									 end		 
+							endcase
+						end
 					delay <= ZERO8;
 				end
 				STATE_WAIT_START_10:begin	
@@ -187,14 +188,19 @@ else
 						begin
 							lockReceived	<= 1'b0;
 						end
-					zsda	<= 1'b0;	
+						//debug
+//					if (stateScl == STATE_IDLE_0)
+//					stateSda <=STATE_IDLE_0;
+//					
+					//zsda	<= 1'b0;	
 			end
 			STATE_ACK_33: begin	
 					if (stateScl == STATE_PREPARE_RECEIVE_41 || stateScl == STATE_PREPARE_SEND_21)
 						begin
 							stateSda <= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;							
 						end
-					zsda	<= (rw) ? 1'b1:1'b0;
+						zsda	<= 1'b0;	
+					//zsda	<= (rw) ? 1'b1:1'b0;
 			end	
 			STATE_PREPARE_SEND_21: begin
 					if (stateScl == STATE_SEND_22) 
@@ -260,9 +266,12 @@ begin
 				STATE_WAIT_GEN_ACK_32: begin		
 					if ({lastScl,scl} == 2'b01)
 						stateScl 	<= STATE_ACK_33;	
+						//debug
+						//stateScl 	<= STATE_IDLE_0;
 					lastScl <= scl;
 				end	
 				STATE_ACK_33: begin	
+					if ({lastScl,scl} == 2'b10)
 						stateScl 	<= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;	
 				end	
 				STATE_PREPARE_SEND_21: begin		
