@@ -23,6 +23,7 @@ localparam STATE_STOP_63						= 6'd63;
 //SLAVE
 localparam STATE_WAIT_START_10				= 6'd10;
 localparam STATE_WAIT_GEN_ACK_ADR_34		= 6'd34;
+localparam STATE_GEN_ACK_35					= 6'd35;
 localparam STATE_PREPARE_RECEIVE_ADR_43	= 6'd43;
 localparam STATE_RECEIVE_ADR_44				= 6'd44;
 localparam STATE_WAIT_STOP_62					= 6'd62;

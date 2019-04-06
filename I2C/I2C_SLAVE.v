@@ -32,6 +32,7 @@ reg lastSda	= 1'b1;
 reg lastScl	= 1'b1;
 reg lockReceived	= 1'b1;
 reg lockSended		= 1'b1;
+reg ack		= 1'b1;
 
 assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
@@ -100,6 +101,7 @@ if (!reset)
 		lockReceived	<= 1'b1;	
 		lockSended	<= 1'b1;	
 		count <= COUNT_MAX4;
+		ack	<= 1'b1;
 	end
 else
 	begin
@@ -127,6 +129,7 @@ else
 								end					
 							zsda	<= 1'b1;
 							lockReceived	<= 1'b1;
+							lockSended	<= 1'b1;							
 					end
 					STATE_RECEIVE_ADR_44,
 					STATE_RECEIVE_42: begin						//если мы приняли все биты с 7 по 0, то устанавливаем счетчик приема бит на старший бит
@@ -198,6 +201,7 @@ else
 						else
 							begin
 								lockReceived	<= 1'b1;
+								lockSended	<= 1'b1;
 								zsda =  datasend[count] ? 1'b1: 1'b0;
 							end
 					end
@@ -216,18 +220,31 @@ else
 									end
 							end
 					end
-					STATE_WAIT_ACK_31: begin
-						if (stateScl == STATE_SEND_22) 
-							begin
-								stateSda <= STATE_SEND_22;								
+					STATE_WAIT_ACK_31: begin					//состояние подготовки АСК если у slave есть еще данные то мы должны их подготовить  
+							if (stateScl == STATE_WAIT_ACK_31) 
+								begin
+									stateSda <= STATE_ACK_33;
+									ack	<= 1'b1;							
+								end
+							else
+								begin
+									zsda =  1'b1;
+									lockSended	<= 1'b0;
+								end
+					end
+					STATE_ACK_33: begin	
+						if (stateScl == STATE_ACK_33) 	//если от мастера не пришло подтверждение значит стоп
+							begin							
+								stateSda <= (ack == 1'b0) ? STATE_PREPARE_SEND_21: STATE_IDLE_0;
 							end
 						else
 							begin
-								lockReceived	<= 1'b1;
-								zsda =  datasend[count] ? 1'b1: 1'b0;
+								if (sda == 0)
+								begin
+									ack	<= 1'b0;
+								end
 							end
 					end
-					
 				endcase
 		end
 	end
