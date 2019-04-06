@@ -1,6 +1,7 @@
 module I2C_MASTER(clk, reset, start, ready, sda, scl, send, datasend, sended, receive, datareceive, received, state);
 
 `include "I2C.vh"
+`include "../UTILS/NO_ARCH.vh"
 
 input wire clk;					//сигнал тактовой частоты
 input wire reset;					//сигнал сброса

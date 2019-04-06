@@ -1,6 +1,7 @@
-module I2C_SLAVE(clk, reset, sda, scl, datasend, sended, datareceive, received, address, addressLatch);
+module I2C_SLAVE(clk, reset, sda, scl, address, datasend, sended, datareceive, received);
 
 `include "I2C.vh"
+`include "../UTILS/NO_ARCH.vh"
 
 input wire clk;					//сигнал тактовой частоты
 input wire reset;					//сигнал сброса
@@ -14,19 +15,17 @@ output reg[7:0] datareceive;	//регистр принятых данных по
 output wire received;			//готовность полученого байта для выгрузки
 
 input	wire[6:0] address;
-input wire addressLatch;					//сигнал защелкунуть адрес
 
 reg zsda	= 1'b1;					//первод лини sda в состояние Z
 reg zscl	= 1'b1;					//первод лини scl в состояние Z
 reg rw	= 1'b1;					//операция - поумолчанию чтение read = 1 write = 0
 reg[3:0]	count;					//счетчик пересылаемых байт
 reg[5:0] stateSda;				//состояние линии sda
-reg[5:0] saveSda;					//состояние линии sda
 reg[5:0] stateScl;				//состояние линии scl
-reg[6:0] devAddress = SLAVE_ADDRESS;	//регистр адреса устройства
+
 reg[7:0] send = ZERO8;			//адрес и данные, которые шлем в устройство,  а так же тут задаем тип операции - чтения или записи данных
 reg[7:0]	delay;					//
-reg[5:0] stateFSM;					//состояние линии sda
+reg[5:0] stateFSM;				//отслеживание начала и окончание транзакции
 
 
 reg lastSda	= 1'b1;
@@ -37,8 +36,8 @@ reg lockSended		= 1'b1;
 assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 
-assign sended 		= (lockSended) 	? 1'b1 : 1'b0;
-assign received 	= (lockReceived) 	? 1'b1 : 1'b0;
+assign sended 		= (lockSended) 	? 1'b0 : 1'b1;
+assign received 	= (lockReceived) 	? 1'b0 : 1'b1;
 
 always@(negedge clk)
 begin
@@ -95,7 +94,6 @@ if (!reset)
 		stateSda	<= STATE_IDLE_0;
 		zsda	<= 1'b1;			
 		datareceive <= ZERO8;
-		//datasend <= QUARTER8;	//тестовый ответ
 		lockReceived	<= 1'b1;	
 		lockSended	<= 1'b1;	
 		count <= COUNT_MAX4;
@@ -111,8 +109,7 @@ else
 		else
 			begin
 				case (stateSda)
-					STATE_IDLE_0: begin							//поумолчанию переходим в режим ожидания старта транзакции
-						//stateSda <= (stateFSM == STATE_START_11) ? STATE_PREPARE_RECEIVE_ADR_43 : STATE_IDLE_0;					
+					STATE_IDLE_0: begin							//поумолчанию переходим в режим ожидания старта транзакции	
 						zsda	<= 1'b1;						
 					end
 					STATE_PREPARE_RECEIVE_ADR_43,
@@ -145,24 +142,20 @@ else
 					STATE_WAIT_GEN_ACK_ADR_34: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
 							if (stateScl == STATE_ACK_33)
 								begin
-									stateSda <= (datareceive[7:1] == devAddress) ? STATE_ACK_33:STATE_IDLE_0;
+									stateSda <= (datareceive[7:1] == address) ? STATE_ACK_33:STATE_IDLE_0;
 									rw <= datareceive[0];
 								end
-							else
-								begin
-									lockReceived	<= 1'b0;
-								end
 					end
-					STATE_WAIT_GEN_ACK_32: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
+					STATE_WAIT_GEN_ACK_32: begin  			
 							if (stateScl == STATE_ACK_33)
 								begin
 									stateSda <= STATE_ACK_33;
 									rw <= datareceive[0];
 								end
-							else
-								begin
-									lockReceived	<= 1'b0;
-								end
+//							else
+//								begin
+							lockReceived	<= 1'b0;
+//								end
 					end
 					STATE_ACK_33: begin	
 							if (stateScl == STATE_PREPARE_RECEIVE_41 || stateScl == STATE_PREPARE_SEND_21)
@@ -256,9 +249,4 @@ begin
 		end
 end	
 
-always @(posedge clk, negedge addressLatch)
-begin
-	if(addressLatch == 1'b0) 
-		devAddress <= address;
-end	
 endmodule

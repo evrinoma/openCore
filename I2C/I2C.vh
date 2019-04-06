@@ -26,14 +26,6 @@ localparam STATE_WAIT_GEN_ACK_ADR_34		= 6'd34;
 localparam STATE_PREPARE_RECEIVE_ADR_43	= 6'd43;
 localparam STATE_RECEIVE_ADR_44				= 6'd44;
 localparam STATE_WAIT_STOP_62					= 6'd62;
-localparam SLAVE_ADDRESS						= 7'h77;//1110111 address slave 
-localparam SLAVE_ADDRESS_CHIP_ID				= 8'hD0;//address chipId 
-localparam SLAVE_CHIP_ID						= 8'h55;//chipId slave 
-
-//const counter
-localparam ZERO8									= 8'd0;
-localparam ONE8									= 8'd1;
-localparam COUNT_MAX4							= 4'd7;
 
 //counter delay
 localparam EIGHTH8								= 8'd31;
