@@ -58,7 +58,10 @@ begin
 										stateFSM <= STATE_WAIT_START_10;
 									 end
 							3'b011:begin 
-										stateFSM <= STATE_STOP_63;		
+										 if (stateSda!=STATE_PREPARE_SEND_21) 
+											begin
+												stateFSM <= STATE_STOP_63;		
+											end
 									 end		 
 							endcase
 						end
@@ -140,50 +143,91 @@ else
 							datareceive[count] <= (sda == 0) ? 1'b0: 1'b1;					
 					end
 					STATE_WAIT_GEN_ACK_ADR_34: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
-							if (stateScl == STATE_ACK_33)
+							if (stateScl == STATE_GEN_ACK_35)
 								begin
-									stateSda <= (datareceive[7:1] == address) ? STATE_ACK_33:STATE_IDLE_0;
+									stateSda <= (datareceive[7:1] == address) ? STATE_GEN_ACK_35:STATE_IDLE_0;
 									rw <= datareceive[0];
 								end
 					end
 					STATE_WAIT_GEN_ACK_32: begin  			
-							if (stateScl == STATE_ACK_33)
+							if (stateScl == STATE_GEN_ACK_35)
 								begin
-									stateSda <= STATE_ACK_33;
+									stateSda <= STATE_GEN_ACK_35;
 									rw <= datareceive[0];
 								end
-//							else
-//								begin
 							lockReceived	<= 1'b0;
-//								end
 					end
-					STATE_ACK_33: begin	
+					STATE_GEN_ACK_35: begin	
 							if (stateScl == STATE_PREPARE_RECEIVE_41 || stateScl == STATE_PREPARE_SEND_21)
 								begin
 									stateSda <= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;							
 								end
 								zsda	<= 1'b0;	
 					end	
+					
+//					STATE_PREPARE_SEND_21: begin
+//						if (stateScl == STATE_SEND_22) 
+//							begin
+//								stateSda <= STATE_SEND_22;								
+//							end
+//							
+//						lockReceived	<= 1'b1;
+//						zsda =  datasend[count] ? 1'b1: 1'b0;
+//					end
+//					STATE_SEND_22: begin
+//						if (stateScl == STATE_PREPARE_SEND_21) 
+//							begin
+//								if (count == 4'h0) 			
+//									begin
+//										stateSda<= (stateScl == STATE_SEND_22) ? STATE_WAIT_GEN_ACK_32 : STATE_WAIT_GEN_ACK_ADR_34;
+//										count <= COUNT_MAX4;
+//									end
+//								else
+//									begin
+//										stateSda<=STATE_PREPARE_SEND_21;
+//										count <= count - 4'd1;
+//									end
+//							end
+//					end
+					
 					STATE_PREPARE_SEND_21: begin
-							if (stateScl == STATE_SEND_22) 
-								begin
-									stateSda <= STATE_SEND_22;	
-								end	
-							zsda	<= 1'b1;		
-							lockReceived	<= 1'b1;
+						if (stateScl == STATE_SEND_22) 
+							begin
+								stateSda <= STATE_SEND_22;								
+							end
+						else
+							begin
+								lockReceived	<= 1'b1;
+								zsda =  datasend[count] ? 1'b1: 1'b0;
+							end
 					end
 					STATE_SEND_22: begin
-							if (count == 4'h0) 			
-								begin
-									stateSda<= (stateScl == STATE_SEND_22) ? STATE_WAIT_GEN_ACK_32 : STATE_WAIT_GEN_ACK_ADR_34;
-									count <= COUNT_MAX4;
-								end
-							else
-								begin								
-									count <= count - 4'd1;
-								end						
-							zsda =  datasend[count] ? 1'b0: 1'b1;	
+						if (stateScl == STATE_PREPARE_SEND_21) 
+							begin
+								if (count == 4'h0) 			
+									begin
+										stateSda<= (stateScl == STATE_SEND_22) ? STATE_WAIT_ACK_31;
+										count <= COUNT_MAX4;
+									end
+								else
+									begin
+										stateSda<=STATE_PREPARE_SEND_21;
+										count <= count - 4'd1;
+									end
+							end
 					end
+					STATE_WAIT_ACK_31: begin
+						if (stateScl == STATE_SEND_22) 
+							begin
+								stateSda <= STATE_SEND_22;								
+							end
+						else
+							begin
+								lockReceived	<= 1'b1;
+								zsda =  datasend[count] ? 1'b1: 1'b0;
+							end
+					end
+					
 				endcase
 		end
 	end
@@ -229,20 +273,22 @@ begin
 				STATE_WAIT_GEN_ACK_ADR_34,
 				STATE_WAIT_GEN_ACK_32: begin		
 					if ({lastScl,scl} == 2'b01)
-						stateScl 	<= STATE_ACK_33;	
+						stateScl 	<= STATE_GEN_ACK_35;	
 					lastScl <= scl;
 				end	
-				STATE_ACK_33: begin	
+				STATE_GEN_ACK_35: begin	
 					if ({lastScl,scl} == 2'b10)
 						stateScl 	<= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;	
 				end	
-				STATE_PREPARE_SEND_21: begin		
+				STATE_PREPARE_SEND_21: begin
 					if ({lastScl,scl} == 2'b01)
-						stateScl 	<= STATE_SEND_22;		
+						stateScl <= STATE_SEND_22;
 					lastScl <= scl;
 				end	
 				STATE_SEND_22: begin	
-					stateScl <= STATE_PREPARE_SEND_21;
+					if ({lastScl,scl} == 2'b10)
+						stateScl 	<= STATE_PREPARE_SEND_21;		
+					lastScl <= scl;
 				end	
 
 			endcase
