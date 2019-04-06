@@ -1,6 +1,7 @@
 module SLAVE_DRIVER(clk, reset, address, datasend, sended, datareceive, received );
 
 `include "SLAVE_DRIVER.vh"
+`include "../../UTILS/NO_ARCH.vh"
 
 input wire clk;					//сигнал тактовой частоты
 input wire reset;					//сигнал сброса
@@ -14,6 +15,7 @@ input	wire received;				//
 output reg[6:0] address = SLAVE_ADDRESS; 		//регистр адреса устройства
 
 reg[2:0] stateFSM;				//состояние	
+reg[2:0] stateDRIVER;	
 
 reg lastReceived	= 1'b0;
 reg lastSended		= 1'b0;
@@ -48,6 +50,36 @@ begin
 			endcase	
 			lastReceived <= received;				
 			lastSended <= sended;	
+		end
+end
+
+always@(posedge clk)
+begin
+	if (!reset)
+		begin
+			datasend<=ZERO8;
+			stateDRIVER<=STATE_IDLE_0;
+		end
+	else
+		begin
+			case (stateDRIVER)
+				STATE_IDLE_0:begin
+					stateDRIVER <= (stateFSM == STATE_RECEIVE_2)?STATE_RECEIVE_2:(stateFSM == STATE_SEND_4)?STATE_SEND_4:STATE_IDLE_0;
+				end
+				STATE_RECEIVE_2:begin
+					if (datareceive == SLAVE_ADDRESS_CHIP_ID) 
+						begin
+							datasend<=SLAVE_CHIP_ID;
+						end					
+					stateDRIVER <= STATE_STOP_7;
+				end
+				STATE_SEND_4:begin
+					stateDRIVER <= STATE_STOP_7;
+				end
+				STATE_STOP_7:begin
+					stateDRIVER <= STATE_IDLE_0;
+				end
+			endcase
 		end
 end
 

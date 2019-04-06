@@ -26,9 +26,7 @@ module I2C_BMP180(
 	slv_datasend,
 	slv_sended,
 	slv_datareceive,
-	slv_received,
-	address,
-	addressLatch
+	slv_received
 );
 
 input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
@@ -53,6 +51,7 @@ inout 	scl;							//сигнал тактирования I2C
 
 wire [7:0] datareceive;
 wire [7:0] datasend;
+wire [6:0] address;
 
 output wire[5:0] state;
 output wire receive;
@@ -65,8 +64,6 @@ output wire[7:0] slv_datasend;
 output wire slv_sended;
 output wire[7:0] slv_datareceive;
 output wire slv_received;
-input	wire[6:0] address;
-input wire addressLatch;
 
 wire startIC;
 
@@ -151,12 +148,21 @@ I2C_SLAVE I2C_SLAVE (
 .reset(reset), 
 .sda(sda), 
 .scl(scl), 
+.address(address),
 .datasend(slv_datasend), 
 .sended(slv_sended), 
 .datareceive(slv_datareceive), 
-.received(slv_received), 
+.received(slv_received)
+);
+
+SLAVE_DRIVER SLAVE_DRIVER (
+.clk(clk), 
+.reset(reset), 
 .address(address), 
-.addressLatch(addressLatch)
+.datasend(slv_datasend), 
+.sended(slv_sended), 
+.datareceive(slv_datareceive), 
+.received(slv_received)
 );
 
 endmodule
