@@ -167,32 +167,6 @@ else
 								end
 								zsda	<= 1'b0;	
 					end	
-					
-//					STATE_PREPARE_SEND_21: begin
-//						if (stateScl == STATE_SEND_22) 
-//							begin
-//								stateSda <= STATE_SEND_22;								
-//							end
-//							
-//						lockReceived	<= 1'b1;
-//						zsda =  datasend[count] ? 1'b1: 1'b0;
-//					end
-//					STATE_SEND_22: begin
-//						if (stateScl == STATE_PREPARE_SEND_21) 
-//							begin
-//								if (count == 4'h0) 			
-//									begin
-//										stateSda<= (stateScl == STATE_SEND_22) ? STATE_WAIT_GEN_ACK_32 : STATE_WAIT_GEN_ACK_ADR_34;
-//										count <= COUNT_MAX4;
-//									end
-//								else
-//									begin
-//										stateSda<=STATE_PREPARE_SEND_21;
-//										count <= count - 4'd1;
-//									end
-//							end
-//					end
-					
 					STATE_PREPARE_SEND_21: begin
 						if (stateScl == STATE_SEND_22) 
 							begin
@@ -210,7 +184,7 @@ else
 							begin
 								if (count == 4'h0) 			
 									begin
-										stateSda<= (stateScl == STATE_SEND_22) ? STATE_WAIT_ACK_31;
+										stateSda<=STATE_WAIT_ACK_31;
 										count <= COUNT_MAX4;
 									end
 								else
@@ -235,7 +209,7 @@ else
 					STATE_ACK_33: begin	
 						if (stateScl == STATE_ACK_33) 	//если от мастера не пришло подтверждение значит стоп
 							begin							
-								stateSda <= (ack == 1'b0) ? STATE_PREPARE_SEND_21: STATE_IDLE_0;
+								stateSda <= (ack == 1'b0) ? STATE_PREPARE_SEND_21: STATE_STOP_63;
 							end
 						else
 							begin
@@ -243,6 +217,17 @@ else
 								begin
 									ack	<= 1'b0;
 								end
+							end
+					end
+					STATE_STOP_63: begin	
+						if (stateFSM == STATE_STOP_63) 	//стоп
+							begin							
+								stateSda <= STATE_IDLE_0;
+							end
+						else
+							begin
+								lockReceived	<= 1'b1;
+								lockSended	<= 1'b1;
 							end
 					end
 				endcase
@@ -308,6 +293,15 @@ begin
 					lastScl <= scl;
 				end	
 
+				STATE_WAIT_ACK_31: begin		
+					if ({lastScl,scl} == 2'b01)
+						stateScl 	<= STATE_WAIT_ACK_31;	
+					lastScl <= scl;
+				end	
+				STATE_ACK_33: begin	
+					if ({lastScl,scl} == 2'b10)
+						stateScl 	<= STATE_ACK_33;	
+				end
 			endcase
 		end
 end	
