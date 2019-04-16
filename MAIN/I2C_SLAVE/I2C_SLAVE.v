@@ -5,40 +5,18 @@
 `define FULL_QUERY_BMP180
 `undef FULL_QUERY_BMP180
 
-module I2C_BMP180(
+module I2C_MASTER_SLAVE(
 	receive,
 	received,
 	send,
 	sended,
-	swId, 
-	swShow,	
-`ifdef FULL_QUERY_BMP180
-	swSettings, swTemp, swGTemp, swPress, swGPress, 
-`endif
 	clk, 
 	reset, 
 	out, 
 	ready, 
 	scl, 
-	sda,
-	state,
-	
-	slv_datasend,
-	slv_sended,
-	slv_datareceive,
-	slv_received
+	sda
 );
-
-input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
-input		wire swShow;				//кнопка режим - прочитать показать принятые данные
-
-`ifdef FULL_QUERY_BMP180
-	input		wire swSettings;			//кнопка режим - прочитать коэфициенты чипа BMP180
-	input		wire swTemp;				//кнопка режим - переключить режим на получение температуры
-	input		wire swGTemp;				//кнопка режим - прочитать температуру
-	input		wire swPress;				//кнопка режим - прочитать режим на получение давления
-	input		wire swGPress;				//кнопка режим - прочитать давление
-`endif
 
 input 	wire clk;					//сигнал тактовой частоты
 input 	wire reset;					//сигнал сброса
@@ -53,17 +31,17 @@ wire [7:0] datareceive;
 wire [7:0] datasend;
 wire [6:0] address;
 
-output wire[5:0] state;
+wire[5:0] state;
 output wire receive;
 output wire received;
 output wire send;
 output wire sended;
 
 
-output wire[7:0] slv_datasend;
-output wire slv_sended;
-output wire[7:0] slv_datareceive;
-output wire slv_received;
+wire[7:0] slv_datasend;
+wire slv_sended;
+wire[7:0] slv_datareceive;
+wire slv_received;
 
 wire startIC;
 
@@ -109,38 +87,6 @@ I2C_MASTER I2C_MASTER(
 	.datareceive(datareceive), 
 	.received(received), 
 	.state(stateIC)
-);
-
-// assign statements (if any)                          
-BMP180 BMP180 (
-// port map - connection between master ports and signals/registers   
-	.clk(clk), //
-	.datareceive(datareceive),
-	.datasend(datasend), 
-	.receive(receive),
-	.received(received),
-	.send(send),
-	.sended(sended),
-	.start(start),
-`ifdef WITH_DEBOUNCE
-	.reset(resetDeBounce), 
-	.swId(swIdDeBounce), 
-	.swShow(swShowDeBounce), 
-`else
-	.swId(swId), 
-	.swShow(swShow), 
-	.reset(reset),
-	`ifdef FULL_QUERY_BMP180
-		.swPress(swPress), 
-		.swGTemp(swGTemp), 
-		.swGPress(swGPress), 
-		.swSettings(swSettings),
-		.swTemp(swTemp), 
-	`endif
-`endif
-	.isReady(ready),
-	.out(out), 
-	.state(state)
 );
 
 I2C_SLAVE I2C_SLAVE (
