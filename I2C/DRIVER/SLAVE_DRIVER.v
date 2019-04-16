@@ -15,12 +15,10 @@ input	wire received;				//
 output reg[6:0] address = SLAVE_ADDRESS; 		//регистр адреса устройства
 
 reg[2:0] stateFSM;				//состояние	
-reg[2:0] stateDRIVER;	
+reg[3:0] stateDRIVER;	
 
 reg lastReceived	= 1'b0;
 reg lastSended		= 1'b0;
-
-//assign address = SLAVE_ADDRESS;
 
 always@(negedge clk)
 begin
@@ -69,15 +67,18 @@ begin
 				STATE_RECEIVE_2:begin
 					if (datareceive == SLAVE_ADDRESS_CHIP_ID) 
 						begin
-							datasend<=SLAVE_CHIP_ID;
-						end					
-					stateDRIVER <= STATE_STOP_7;
+							stateDRIVER <= STATE_GET_CHIP_ID_8;
+						end
 				end
 				STATE_SEND_4:begin
 					stateDRIVER <= STATE_STOP_7;
 				end
 				STATE_STOP_7:begin
 					stateDRIVER <= STATE_IDLE_0;
+				end
+				STATE_GET_CHIP_ID_8:begin				
+					datasend<=SLAVE_CHIP_ID;
+					stateDRIVER <= STATE_STOP_7;
 				end
 			endcase
 		end
