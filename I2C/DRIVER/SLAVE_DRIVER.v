@@ -16,6 +16,7 @@ output reg[6:0] address = SLAVE_ADDRESS; 		//регистр адреса уст�
 
 reg[2:0] stateFSM;				//состояние	
 reg[3:0] stateDRIVER;	
+reg[3:0] lastStateDRIVER;
 
 reg lastReceived	= 1'b0;
 reg lastSended		= 1'b0;
@@ -57,6 +58,7 @@ begin
 		begin
 			datasend<=ZERO8;
 			stateDRIVER<=STATE_IDLE_0;
+			lastStateDRIVER<=STATE_IDLE_0;
 		end
 	else
 		begin
@@ -65,19 +67,43 @@ begin
 					stateDRIVER <= (stateFSM == STATE_RECEIVE_2)?STATE_RECEIVE_2:(stateFSM == STATE_SEND_4)?STATE_SEND_4:STATE_IDLE_0;
 				end
 				STATE_RECEIVE_2:begin
-					if (datareceive == SLAVE_ADDRESS_CHIP_ID) 
-						begin
-							stateDRIVER <= STATE_GET_CHIP_ID_8;
+					case (datareceive)
+						SLAVE_ADDRESS_CHIP_ID:begin
+							stateDRIVER <= STATE_GET_CHIP_ID_8;						
 						end
+						SLAVE_ADDRESS_GET_INT_16:begin
+							stateDRIVER <= STATE_GET_INT_16_HIDH_10;						
+						end
+						default:begin
+							stateDRIVER <= STATE_STOP_7;
+						end
+					endcase
 				end
 				STATE_SEND_4:begin
-					stateDRIVER <= STATE_STOP_7;
+					case (lastStateDRIVER)
+						STATE_GET_INT_16_HIDH_10:begin
+							stateDRIVER <= STATE_GET_INT_16_LOW_9;						
+						end
+						default:begin
+							stateDRIVER <= STATE_STOP_7;
+						end
+					endcase
 				end
 				STATE_STOP_7:begin
 					stateDRIVER <= STATE_IDLE_0;
 				end
 				STATE_GET_CHIP_ID_8:begin				
 					datasend<=SLAVE_CHIP_ID;
+					stateDRIVER <= STATE_STOP_7;
+				end
+				STATE_GET_INT_16_HIDH_10:begin				
+					datasend<=SLAVE_ADDRESS_HIDH_INT_16;
+					lastStateDRIVER<= STATE_GET_INT_16_HIDH_10;
+					stateDRIVER <= STATE_STOP_7;
+				end
+				STATE_GET_INT_16_LOW_9:begin				
+					datasend<=SLAVE_ADDRESS_LOW_INT_16;
+					lastStateDRIVER<= STATE_IDLE_0;
 					stateDRIVER <= STATE_STOP_7;
 				end
 			endcase
