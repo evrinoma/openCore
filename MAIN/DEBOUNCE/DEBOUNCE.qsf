@@ -42,7 +42,7 @@ set_global_assignment -name DEVICE EP4CE6E22C8
 set_global_assignment -name TOP_LEVEL_ENTITY DEBOUNCE
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 15.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:50:46  APRIL 26, 2016"
-set_global_assignment -name LAST_QUARTUS_VERSION "17.0.0 Standard Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "18.0.0 Standard Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR "-1"
 set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
@@ -62,30 +62,6 @@ set_global_assignment -name DEVICE_FILTER_PIN_COUNT 144
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name ENABLE_DRC_SETTINGS ON
 set_location_assignment PIN_23 -to clk
-set_location_assignment PIN_77 -to sda
-set_location_assignment PIN_76 -to scl
-set_location_assignment PIN_88 -to reset
-set_location_assignment PIN_30 -to ready
-set_location_assignment PIN_24 -to swId
-set_location_assignment PIN_31 -to received
-set_location_assignment PIN_66 -to state[5]
-set_location_assignment PIN_65 -to state[4]
-set_location_assignment PIN_64 -to state[3]
-set_location_assignment PIN_60 -to state[2]
-set_location_assignment PIN_59 -to state[1]
-set_location_assignment PIN_58 -to state[0]
-set_location_assignment PIN_38 -to send
-set_location_assignment PIN_39 -to receive
-set_location_assignment PIN_67 -to pinout
-set_location_assignment PIN_144 -to out[7]
-set_location_assignment PIN_143 -to out[6]
-set_location_assignment PIN_142 -to out[5]
-set_location_assignment PIN_141 -to out[4]
-set_location_assignment PIN_138 -to out[3]
-set_location_assignment PIN_137 -to out[2]
-set_location_assignment PIN_136 -to out[1]
-set_location_assignment PIN_135 -to out[0]
-set_location_assignment PIN_33 -to pinout2
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
@@ -97,4 +73,8 @@ set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME debounce_vlg_tst -section
 set_global_assignment -name EDA_TEST_BENCH_FILE ../../UTILS/DEBOUNCE.vt -section_id debounce
 set_global_assignment -name VERILOG_TEST_BENCH_FILE ../../UTILS/DEBOUNCE.vt
 set_global_assignment -name VERILOG_FILE ../../UTILS/DEBOUNCE.v
+set_location_assignment PIN_88 -to keyBounce
+set_location_assignment PIN_58 -to keyDeBounce
+set_location_assignment PIN_59 -to dclk
+set_location_assignment PIN_60 -to dkeyBounce
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
