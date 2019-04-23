@@ -1,4 +1,13 @@
-module SLAVE_DRIVER(clk, reset, address, datasend, sended, datareceive, received );
+`ifndef DEBUG_SLAVE_DRIVER
+	`define DEBUG_SLAVE_DRIVER
+	`undef DEBUG_SLAVE_DRIVER
+`endif
+
+module SLAVE_DRIVER(
+`ifdef DEBUG_SLAVE_DRIVER
+dstate, 
+`endif
+clk, reset, address, datasend, sended, datareceive, received);
 
 `include "SLAVE_DRIVER.vh"
 `include "../../UTILS/NO_ARCH.vh"
@@ -14,12 +23,21 @@ input	wire received;				//
 
 output reg[6:0] address = SLAVE_ADDRESS; 		//регистр адреса устройства
 
+`ifdef DEBUG_SLAVE_DRIVER
+output wire[6:0] dstate;
+`endif
+
 reg[2:0] stateFSM;				//состояние	
 reg[3:0] stateDRIVER;	
 reg[3:0] lastStateDRIVER;
 
+
 reg lastReceived	= 1'b0;
 reg lastSended		= 1'b0;
+
+`ifdef DEBUG_SLAVE_DRIVER
+assign dstate = {stateDRIVER,stateFSM};
+`endif
 
 always@(negedge clk)
 begin
@@ -44,7 +62,11 @@ begin
 				end
 				STATE_RECEIVE_2,
 				STATE_SEND_4:begin
-					stateFSM <= STATE_IDLE_0;
+					stateFSM <= STATE_WAIT_STOP_6;
+				end
+				STATE_WAIT_STOP_6:begin
+					if (4'b0000 == {lastReceived,received,lastSended,sended})
+						stateFSM <= STATE_IDLE_0;
 				end
 			endcase	
 			lastReceived <= received;				
@@ -76,6 +98,8 @@ begin
 						end
 						default:begin
 							stateDRIVER <= STATE_STOP_7;
+							lastStateDRIVER<=STATE_IDLE_0;
+							datasend<=ZERO8;
 						end
 					endcase
 				end
