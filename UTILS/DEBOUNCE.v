@@ -5,7 +5,7 @@ module DEBOUNCE(
 `ifdef DEBUG_DEBOUNCE
 dclk, dkeyBounce, 
 `endif
-clk, keyBounce, keyDeBounce,);
+clk, keyBounce, keyDeBounce);
 input wire clk;
 input wire keyBounce;
 output wire keyDeBounce;
