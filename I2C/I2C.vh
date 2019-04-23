@@ -25,10 +25,11 @@ localparam STATE_WAIT_START_10				= 6'd10;//0x0A
 localparam STATE_WAIT_GEN_ACK_ADR_34		= 6'd34;//0x22		
 localparam STATE_GEN_ACK_35					= 6'd35;//0x23		
 localparam STATE_PREPARE_RECEIVE_ADR_43	= 6'd43;//0x2B		
-localparam STATE_RECEIVE_ADR_44				= 6'd44;//0x2C		
-localparam STATE_WAIT_STOP_62					= 6'd62;//0x3E		
+localparam STATE_RECEIVE_ADR_44				= 6'd44;//0x2C
+localparam STATE_WAIT_STOP_62					= 6'd62;//0x3E	
 
 //counter delay
+localparam SIXTEEN8								= 8'd15;
 localparam EIGHTH8								= 8'd31;
 localparam QUARTER8								= 8'd62;
 localparam HALF8									= 8'd124;

@@ -8,15 +8,16 @@ input wire reset;					//сигнал сброса
 inout sda;							//линия передачи данных I2C 
 inout scl;							//сигнал тактирования I2C
 
+input	wire[6:0] address;
+
 input  wire[7:0] datasend;		//адрес и данные, которые шлем в устройство,  а так же тут задаем тип операции - чтения или записи данных
 output wire sended;				//сигнал записи новой порции данных при много байтном обмене
 
 output reg[7:0] datareceive;	//регистр принятых данных по шине - полученый байт
 output wire received;			//готовность полученого байта для выгрузки
+
 output wire[5:0] state;
 output wire[5:0] _stateScl;
-
-input	wire[6:0] address;
 
 reg zsda	= 1'b1;					//первод лини sda в состояние Z
 reg zscl	= 1'b1;					//первод лини scl в состояние Z
@@ -26,9 +27,9 @@ reg[5:0] stateSda;				//состояние линии sda
 reg[5:0] stateScl;				//состояние линии scl
 
 reg[7:0] send = ZERO8;			//адрес и данные, которые шлем в устройство,  а так же тут задаем тип операции - чтения или записи данных
-reg[7:0]	delay;					//
+reg[7:0]	delay = ZERO8;			//
 reg[5:0] stateFSM;				//отслеживание начала и окончание транзакции
-
+reg[7:0]	delayScl = ZERO8;		//
 
 reg lastSda	= 1'b1;
 reg lastScl	= 1'b1;
@@ -45,8 +46,8 @@ assign received 	= (lockReceived) 	? 1'b0 : 1'b1;
 //assign state = {reset,lastSda,stateFSM[3:0]};
 assign state = stateSda;
 //assign _stateScl = count;
-assign _stateScl = stateScl;
-//assign _stateScl = {lastScl,stateScl[4:0]};
+//assign _stateScl = stateScl;
+assign _stateScl = {lastScl,stateScl[4:0]};
 
 always@(negedge clk)
 begin
@@ -219,7 +220,7 @@ else
 									rw <= datareceive[0];
 								end
 							lockReceived	<= 1'b0;
-							zsda	<= 1'b0;								
+							zsda	<= 1'b0;
 					end
 					STATE_GEN_ACK_35: begin	
 							if (stateScl == STATE_PREPARE_RECEIVE_41 || stateScl == STATE_PREPARE_SEND_21)
@@ -275,6 +276,7 @@ begin
 	if (!reset)
 		begin
 			stateScl <= STATE_IDLE_0;
+			delayScl <= ZERO8;
 			lastScl <= 1'b1;
 			zscl	<= 1'b1;
 		end
@@ -284,90 +286,97 @@ begin
 				STATE_IDLE_0: begin
 					stateScl <= STATE_IDLE_0;
 					lastScl <= 1'b1;
-					zscl	<= 1'b1;
 				end
 
 				STATE_PREPARE_RECEIVE_ADR_43: begin
 					if ({lastScl,scl} == 2'b01)
 						begin
-							stateScl 	<= STATE_RECEIVE_ADR_44;
+							stateScl <= STATE_RECEIVE_ADR_44;
 						end
-					lastScl <= scl;
+					else
+						lastScl <= scl;						
 				end
 				STATE_RECEIVE_ADR_44: begin
 					if ({lastScl,scl} == 2'b10)
 						begin
-							stateScl 	<= STATE_PREPARE_RECEIVE_ADR_43;
+							stateScl <= STATE_PREPARE_RECEIVE_ADR_43;
 						end
-					lastScl <= scl;
-				end
-			
+					else
+						lastScl <= scl;
+				end	
+				
 				STATE_PREPARE_RECEIVE_41: begin	
 					if ({lastScl,scl} == 2'b01)
 						begin
-							stateScl 	<= STATE_RECEIVE_42;
+							stateScl <= STATE_RECEIVE_42;
 						end
-					lastScl <= scl;
+					else
+						lastScl <= scl;				
 				end	
 				STATE_RECEIVE_42: begin	
 					if ({lastScl,scl} == 2'b10)
 						begin
-							stateScl 	<= STATE_PREPARE_RECEIVE_41;
+							stateScl <= STATE_PREPARE_RECEIVE_41;
 						end
-					lastScl <= scl;
+					else
+						lastScl <= scl;					
 				end
 				
-				STATE_PREPARE_SEND_21: begin
+				STATE_PREPARE_SEND_21: begin	
 					if ({lastScl,scl} == 2'b01)
 						begin
 							stateScl <= STATE_SEND_22;
 						end
 					else
-						begin
-							lastScl <= scl;
-						end
+						lastScl <= scl;						
 				end	
 				STATE_SEND_22: begin
 					if ({lastScl,scl} == 2'b10)
 						begin
-							stateScl 	<= STATE_PREPARE_SEND_21;
+							stateScl <= STATE_PREPARE_SEND_21;
 						end
-					lastScl <= scl;
+					else
+						lastScl <= scl;
 				end
 				
 				STATE_WAIT_GEN_ACK_ADR_34,
 				STATE_WAIT_GEN_ACK_32: begin
 					if ({lastScl,scl} == 2'b01)
 						begin
-							stateScl 	<= STATE_GEN_ACK_35;
+							stateScl <= STATE_GEN_ACK_35;
 						end
-					lastScl <= scl;
+					else
+						lastScl <= scl;
 				end
 				
 				STATE_GEN_ACK_35: begin	
 					if ({lastScl,scl} == 2'b10)
 						begin
-							stateScl 	<= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;
+							stateScl <= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;
 						end
-					lastScl <= scl;
+					else
+						lastScl <= scl;
 				end
 				
 				STATE_WAIT_ACK_31: begin
 					if ({lastScl,scl} == 2'b01)
 						begin
-							stateScl 	<= STATE_WAIT_ACK_31;
+							stateScl <= STATE_WAIT_ACK_31;
 						end
-					lastScl <= scl;
+					else
+						lastScl <= scl;
 				end
 				
 				STATE_ACK_33: begin
 					if ({lastScl,scl} == 2'b10)
 						begin
-							stateScl 	<= STATE_ACK_33;
+							stateScl <= STATE_ACK_33;
 						end
-					lastScl <= scl;
+					else
+						lastScl <= scl;						
 				end
-			endcase			
+			endcase	
+			zscl	<= 1'b1;		
 		end
 end
 
