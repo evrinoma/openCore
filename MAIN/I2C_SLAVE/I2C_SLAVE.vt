@@ -1,32 +1,8 @@
 `timescale 10 ns/ 10 ps
-module I2C_BMP180_vlg_tst();
+module I2C_SLAVE_vlg_tst();
 
-
-//wire ps2_clk;
-//wire ps2_dat;
-//   
-//pullup(ps2_clk);
-//pullup(ps2_dat);
-//
-//reg drive_ps2clk_lo;
-//reg drive_ps2dat_lo;
-//
-//assign ps2_clk = (drive_ps2clk_lo) ? 1'b0: 1'bz;
-//assign ps2_dat = (drive_ps2dat_lo) ? 1'b0: 1'bz;
-
-// test vector input registers
 reg clk;
 reg reset;
-
-reg swId;
-reg swShow;
-`ifdef FULL_QUERY_BMP180
-reg swSettings;
-reg swTemp;
-reg swPress;
-reg swGTemp;
-reg swGPress;
-`endif	
 
 
 // wires                                               
@@ -50,68 +26,37 @@ reg zsda;
 reg [7:0]data;
 reg [7:0]count;
 
-// assign statements (if any)                          
-//assign scl = (en_scl) ? treg_scl : 1'b1;//1'bZ;
-//assign sda = (en_sda) ? treg_sda : 1'b1;//1'bZ;
-
 assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 
-I2C_BMP180 ENTITY (
+I2C_MASTER_SLAVE ENTITY (
 	.receive(receive),
 	.received(received),
 	.send(send),
 	.sended(sended),
-	.swId(swId),
-	.swShow(swShow),
-`ifdef FULL_QUERY_BMP180	
-	.swSettings(swSettings),
-	.swTemp(swTemp),
-	.swPress(swPress),
-	.swGTemp(swGTemp),
-	.swGPress(swGPress),
-`endif	
 	.clk(clk), 
 	.reset(reset),
 	.out(out),
 	.ready(ready), 
 	.scl(scl),
-	.sda(sda),
-	.state(state)
+	.sda(sda)
 );
 
 event EVENT_GET_ID;					//цикл тестирования - получить ID чипа 
 event EVENT_INIT;
 event EVENT_RESET;
-event EVENT_SW_ID;
+event EVENT_ADDRESS_CHIP_ID;
 event EVENT_ACK;
 event EVENT_SCL;
+event EVENT_SDA_SCL_START;
 event EVENT_SCL_RESTART;
-event EVENT_SCL_CLOCK_STRETCH;
 event EVENT_GENERATOR_SDA_DATA;	//генератор 
 event EVENT_GENERATE_ID;			//ответ ID чипа
 
 
-
 always
 begin
-//ns/20 =hz
-//10+10 = 20ns = 50Mhz
 #1 clk = ~clk; 
-//1000ns = 1MHz
-//#50 clk = ~clk;
-//500ns = 2MHz
-//#25 clk = ~clk;
-//2000ns = 0.5MHz
-//#100 clk = ~clk;
-//4000ns = 0.25MHz
-//#200 clk = ~clk;
-//scl 500Hz
-//#250 clk = ~clk;
-//6220 scl 400Hz
-//#311 clk = ~clk;
-//2500000ns = 400 hz
-//#125000 clk = ~clk;  
 end
 
 initial 
@@ -120,18 +65,10 @@ begin
 		@(EVENT_INIT)
 			#0
 			clk = 1'b0; 
-			swId = 1'b1;
-			swShow = 1'b1;
-`ifdef FULL_QUERY_BMP180	
-			swGPress = 1'b1;
-			swGTemp = 1'b1;
-			swPress = 1'b1;
-			swSettings = 1'b1;
-			swTemp = 1'b1;
-`endif	
 			zscl = 1'b1;
 			zsda = 1'b1;
 			reset = 1'b1;
+			data = 8'h00;
 	end
 end
 
@@ -150,22 +87,26 @@ end
 initial 
 begin
 	forever begin
-		@(EVENT_SW_ID)
-			#500
-			swId = 1'b0;
-			#2500
-			swId = 1'b1;
+		@(EVENT_ACK)
+			#0
+			zsda = 1'b0;
+			#250
+			zsda = 1'b1;
 	end
 end
 
 initial 
 begin
 	forever begin
-		@(EVENT_ACK)
+		@(EVENT_SDA_SCL_START)
 			#0
 			zsda = 1'b0;
-			#250
+			#500
+			zscl = 1'b0;
+			#500
 			zsda = 1'b1;
+			#500
+			zscl = 1'b1;
 	end
 end
 	
@@ -175,15 +116,14 @@ begin
 		@(EVENT_GENERATOR_SDA_DATA)
 			#0
 			//zsda = 1'b1;
-			repeat(7)
+			repeat(8)
 			begin				
 				zsda = data[count] ? 1'b1: 1'b0;
+				#0	->EVENT_SCL;
 				#500
-				count = count - 1;								
+				count = count - 1;	
+				
 			end
-			//zsda = data[count] ? 1'b1: 1'b0;
-			//#450
-			//zsda = 1'b1;
 	end
 end
 
@@ -218,17 +158,27 @@ begin
 	end
 end
 
+
 initial 
 begin
 	forever begin
-		@(EVENT_SCL_CLOCK_STRETCH)
+		@(EVENT_ADDRESS_CHIP_ID)
+			data = 8'hEE;
+			count = 7;			
+			#0		->EVENT_GENERATOR_SDA_DATA;
+			#4000	->EVENT_SCL;
 			#0
-			zscl = 1'b0;
-			#2000
-			zscl = 1'b1;
-			#0	->EVENT_SCL;
+			zsda = 1'b1;
+			#250
+			zsda = 1'b1;
+			#10
+			zsda = 1'b1;
+			#240	
+			zsda = 1'b1;	
+			#0 ->EVENT_SCL;
 	end
 end
+
 
 initial 
 begin
@@ -236,59 +186,8 @@ begin
 		@(EVENT_GET_ID)
 			#0		->EVENT_INIT;
 			#500	->EVENT_RESET;
-			#1500	->EVENT_SW_ID;
-//			#760->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#125	->EVENT_ACK;
-//			#375	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#125	->EVENT_ACK;
-//			#325	->EVENT_SCL_RESTART;
-//			#250	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#125	->EVENT_ACK;
-//			
-//				//			#874	->EVENT_SCL;
-//				//			#500	->EVENT_SCL;
-//				//			#500	->EVENT_SCL;
-//				//			#500	->EVENT_SCL;
-//				//			#500	->EVENT_SCL;
-//				//			#500	->EVENT_SCL;
-//				//			#500	->EVENT_SCL;
-//				//			#500	->EVENT_SCL;
-//				//			#500	->EVENT_SCL;			
-//				//			#2		->EVENT_ACK;
-//			#400	->EVENT_GENERATE_ID;
-//			#98	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
-//			#500	->EVENT_SCL;
+			#1000 -> EVENT_SDA_SCL_START;
+			#1000		->EVENT_ADDRESS_CHIP_ID;
 	end
 end
 
@@ -296,7 +195,6 @@ end
 initial 
 begin
 #0		->EVENT_GET_ID;
-//#25000 $stop;
 
 #45000 $stop;
 
