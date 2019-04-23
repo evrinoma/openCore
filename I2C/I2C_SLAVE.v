@@ -1,4 +1,4 @@
-module I2C_SLAVE(clk, reset, sda, scl, address, datasend, sended, datareceive, received);
+module I2C_SLAVE(clk, reset, sda, scl, address, datasend, sended, datareceive, received, state, _stateScl);
 
 `include "I2C.vh"
 `include "../UTILS/NO_ARCH.vh"
@@ -13,6 +13,8 @@ output wire sended;				//сигнал записи новой порции да�
 
 output reg[7:0] datareceive;	//регистр принятых данных по шине - полученый байт
 output wire received;			//готовность полученого байта для выгрузки
+output wire[5:0] state;
+output wire[5:0] _stateScl;
 
 input	wire[6:0] address;
 
@@ -39,6 +41,12 @@ assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому �
 
 assign sended 		= (lockSended) 	? 1'b0 : 1'b1;
 assign received 	= (lockReceived) 	? 1'b0 : 1'b1;
+//assign state = {lastSda,stateFSM[4:0]};
+//assign state = {reset,lastSda,stateFSM[3:0]};
+assign state = stateSda;
+//assign _stateScl = count;
+assign _stateScl = stateScl;
+//assign _stateScl = {lastScl,stateScl[4:0]};
 
 always@(negedge clk)
 begin
@@ -115,62 +123,63 @@ else
 			begin
 				case (stateSda)
 					STATE_IDLE_0: begin							//поумолчанию переходим в режим ожидания старта транзакции	
-						zsda	<= 1'b1;						
+						zsda	<= 1'b1;		
+						datareceive <= ZERO8;				
 					end
-					STATE_PREPARE_RECEIVE_ADR_43,
 					STATE_PREPARE_RECEIVE_41: begin
 							if (stateScl == STATE_RECEIVE_42) 
 								begin
 									stateSda <= STATE_RECEIVE_42;	
-								end
-							else if (stateScl == STATE_RECEIVE_ADR_44) 
+								end				
+							zsda	<= 1'b1;
+							lockReceived	<= 1'b1;
+							lockSended	<= 1'b1;							
+					end
+					STATE_PREPARE_RECEIVE_ADR_43: begin
+							if (stateScl == STATE_RECEIVE_ADR_44) 
 								begin
 									stateSda <= STATE_RECEIVE_ADR_44;	
 								end					
 							zsda	<= 1'b1;
 							lockReceived	<= 1'b1;
 							lockSended	<= 1'b1;							
-					end
-					STATE_RECEIVE_ADR_44,
+					end										
 					STATE_RECEIVE_42: begin						//если мы приняли все биты с 7 по 0, то устанавливаем счетчик приема бит на старший бит
-							if (count == 4'h0) 			
+							datareceive[count] <= (sda == 0) ? 1'b0: 1'b1;	
+							if (stateScl == STATE_PREPARE_RECEIVE_41) 	
 								begin
-									stateSda<= (stateScl == STATE_PREPARE_RECEIVE_41) ? STATE_WAIT_GEN_ACK_32 : STATE_WAIT_GEN_ACK_ADR_34;
-									count <= COUNT_MAX4;
-								end
-							else
-								begin	
-									stateSda<=stateScl;
-									count <= count - 4'd1;
-								end
-							datareceive[count] <= (sda == 0) ? 1'b0: 1'b1;					
+									if (count == 4'h0) 
+										begin
+											stateSda<= STATE_WAIT_GEN_ACK_32;
+											count <= COUNT_MAX4;
+										end
+									else
+										begin
+											stateSda<= STATE_PREPARE_RECEIVE_41;
+											count <= count - 4'd1;
+										end
+								end							
+					end					
+					STATE_RECEIVE_ADR_44: begin						//если мы приняли все биты с 7 по 0, то устанавливаем счетчик приема бит на старший бит
+							datareceive[count] <= (sda == 0) ? 1'b0: 1'b1;	
+							if (stateScl == STATE_PREPARE_RECEIVE_ADR_43) 	
+								begin
+									if (count == 4'h0) 
+										begin
+											stateSda<= STATE_WAIT_GEN_ACK_ADR_34;
+											count <= COUNT_MAX4;
+										end
+									else
+										begin
+											stateSda<= STATE_PREPARE_RECEIVE_ADR_43;
+											count <= count - 4'd1;
+										end
+								end		
 					end
-					STATE_WAIT_GEN_ACK_ADR_34: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
-							if (stateScl == STATE_GEN_ACK_35)
-								begin
-									stateSda <= (datareceive[7:1] == address) ? STATE_GEN_ACK_35:STATE_IDLE_0;
-									rw <= datareceive[0];
-								end
-					end
-					STATE_WAIT_GEN_ACK_32: begin  			
-							if (stateScl == STATE_GEN_ACK_35)
-								begin
-									stateSda <= STATE_GEN_ACK_35;
-									rw <= datareceive[0];
-								end
-							lockReceived	<= 1'b0;
-					end
-					STATE_GEN_ACK_35: begin	
-							if (stateScl == STATE_PREPARE_RECEIVE_41 || stateScl == STATE_PREPARE_SEND_21)
-								begin
-									stateSda <= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;							
-								end
-								zsda	<= 1'b0;	
-					end	
 					STATE_PREPARE_SEND_21: begin
 						if (stateScl == STATE_SEND_22) 
 							begin
-								stateSda <= STATE_SEND_22;								
+								stateSda <= STATE_SEND_22;
 							end
 						else
 							begin
@@ -194,6 +203,32 @@ else
 									end
 							end
 					end
+					STATE_WAIT_GEN_ACK_ADR_34: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
+							if (stateScl == STATE_GEN_ACK_35)
+								begin
+									stateSda <= (datareceive[7:1] == address) ? STATE_GEN_ACK_35:STATE_IDLE_0;
+									rw <= datareceive[0];
+								end
+								zsda	<= 1'b0;	
+								count <= COUNT_MAX4;
+					end
+					STATE_WAIT_GEN_ACK_32: begin  			
+							if (stateScl == STATE_GEN_ACK_35)
+								begin
+									stateSda <= STATE_GEN_ACK_35;
+									rw <= datareceive[0];
+								end
+							lockReceived	<= 1'b0;
+							zsda	<= 1'b0;								
+					end
+					STATE_GEN_ACK_35: begin	
+							if (stateScl == STATE_PREPARE_RECEIVE_41 || stateScl == STATE_PREPARE_SEND_21)
+								begin
+									stateSda <= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;							
+								end
+								zsda	<= 1'b0;	
+					end	
+
 					STATE_WAIT_ACK_31: begin					//состояние подготовки АСК если у slave есть еще данные то мы должны их подготовить  
 							if (stateScl == STATE_WAIT_ACK_31) 
 								begin
@@ -252,58 +287,88 @@ begin
 					zscl	<= 1'b1;
 				end
 
-				STATE_PREPARE_RECEIVE_ADR_43: begin		
+				STATE_PREPARE_RECEIVE_ADR_43: begin
 					if ({lastScl,scl} == 2'b01)
-						stateScl 	<= STATE_RECEIVE_ADR_44;		
+						begin
+							stateScl 	<= STATE_RECEIVE_ADR_44;
+						end
 					lastScl <= scl;
-				end	
-				STATE_RECEIVE_ADR_44: begin	
-					stateScl <= STATE_PREPARE_RECEIVE_ADR_43;
+				end
+				STATE_RECEIVE_ADR_44: begin
+					if ({lastScl,scl} == 2'b10)
+						begin
+							stateScl 	<= STATE_PREPARE_RECEIVE_ADR_43;
+						end
+					lastScl <= scl;
 				end
 			
-			
-				STATE_PREPARE_RECEIVE_41: begin		
+				STATE_PREPARE_RECEIVE_41: begin	
 					if ({lastScl,scl} == 2'b01)
-						stateScl 	<= STATE_RECEIVE_42;		
+						begin
+							stateScl 	<= STATE_RECEIVE_42;
+						end
 					lastScl <= scl;
 				end	
 				STATE_RECEIVE_42: begin	
-					stateScl <= STATE_PREPARE_RECEIVE_41;
-				end	
-
-				
-				STATE_WAIT_GEN_ACK_ADR_34,
-				STATE_WAIT_GEN_ACK_32: begin		
-					if ({lastScl,scl} == 2'b01)
-						stateScl 	<= STATE_GEN_ACK_35;	
-					lastScl <= scl;
-				end	
-				STATE_GEN_ACK_35: begin	
 					if ({lastScl,scl} == 2'b10)
-						stateScl 	<= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;	
-				end	
+						begin
+							stateScl 	<= STATE_PREPARE_RECEIVE_41;
+						end
+					lastScl <= scl;
+				end
+				
 				STATE_PREPARE_SEND_21: begin
 					if ({lastScl,scl} == 2'b01)
-						stateScl <= STATE_SEND_22;
-					lastScl <= scl;
+						begin
+							stateScl <= STATE_SEND_22;
+						end
+					else
+						begin
+							lastScl <= scl;
+						end
 				end	
-				STATE_SEND_22: begin	
+				STATE_SEND_22: begin
 					if ({lastScl,scl} == 2'b10)
-						stateScl 	<= STATE_PREPARE_SEND_21;		
+						begin
+							stateScl 	<= STATE_PREPARE_SEND_21;
+						end
 					lastScl <= scl;
-				end	
-
-				STATE_WAIT_ACK_31: begin		
-					if ({lastScl,scl} == 2'b01)
-						stateScl 	<= STATE_WAIT_ACK_31;	
-					lastScl <= scl;
-				end	
-				STATE_ACK_33: begin	
-					if ({lastScl,scl} == 2'b10)
-						stateScl 	<= STATE_ACK_33;	
 				end
-			endcase
+				
+				STATE_WAIT_GEN_ACK_ADR_34,
+				STATE_WAIT_GEN_ACK_32: begin
+					if ({lastScl,scl} == 2'b01)
+						begin
+							stateScl 	<= STATE_GEN_ACK_35;
+						end
+					lastScl <= scl;
+				end
+				
+				STATE_GEN_ACK_35: begin	
+					if ({lastScl,scl} == 2'b10)
+						begin
+							stateScl 	<= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;
+						end
+					lastScl <= scl;
+				end
+				
+				STATE_WAIT_ACK_31: begin
+					if ({lastScl,scl} == 2'b01)
+						begin
+							stateScl 	<= STATE_WAIT_ACK_31;
+						end
+					lastScl <= scl;
+				end
+				
+				STATE_ACK_33: begin
+					if ({lastScl,scl} == 2'b10)
+						begin
+							stateScl 	<= STATE_ACK_33;
+						end
+					lastScl <= scl;
+				end
+			endcase			
 		end
-end	
+end
 
 endmodule
