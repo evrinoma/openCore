@@ -56,26 +56,6 @@ wire[5:0] _stateScl;
 	);
 `endif
 
-I2C_MASTER I2C_MASTER(
-	.clk(clk), 
-`ifdef WITH_DEBOUNCE
-	.reset(resetDeBounce), 
-`else
-	.reset(reset), 
-`endif
-	.start(start), 
-	.ready(ready), 
-	.sda(sda), 
-	.scl(scl), 
-	.send(send), 
-	.datasend(datasend), 
-	.sended(sended), 
-	.receive(receive), 
-	.datareceive(datareceive), 
-	.received(received), 
-	.state(startMaster)
-);
-
 I2C_SLAVE I2C_SLAVE (
 .clk(clk), 
 `ifdef WITH_DEBOUNCE

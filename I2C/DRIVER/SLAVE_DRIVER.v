@@ -94,7 +94,7 @@ begin
 							stateDRIVER <= STATE_GET_CHIP_ID_8;						
 						end
 						SLAVE_ADDRESS_GET_INT_16:begin
-							stateDRIVER <= STATE_GET_INT_16_HIDH_10;						
+							stateDRIVER <= STATE_GET_INT_16_LOW_10;						
 						end
 						default:begin
 							stateDRIVER <= STATE_STOP_7;
@@ -105,8 +105,8 @@ begin
 				end
 				STATE_SEND_4:begin
 					case (lastStateDRIVER)
-						STATE_GET_INT_16_HIDH_10:begin
-							stateDRIVER <= STATE_GET_INT_16_LOW_9;						
+						STATE_GET_INT_16_LOW_10:begin
+							stateDRIVER <= STATE_GET_INT_16_HIGH_9;						
 						end
 						default:begin
 							stateDRIVER <= STATE_STOP_7;
@@ -120,13 +120,13 @@ begin
 					datasend<=SLAVE_CHIP_ID;
 					stateDRIVER <= STATE_STOP_7;
 				end
-				STATE_GET_INT_16_HIDH_10:begin				
-					datasend<=SLAVE_ADDRESS_HIDH_INT_16;
-					lastStateDRIVER<= STATE_GET_INT_16_HIDH_10;
+				STATE_GET_INT_16_LOW_10:begin				
+					datasend<=SLAVE_ADDRESS_LOW_INT_16;
+					lastStateDRIVER<= STATE_GET_INT_16_LOW_10;
 					stateDRIVER <= STATE_STOP_7;
 				end
-				STATE_GET_INT_16_LOW_9:begin				
-					datasend<=SLAVE_ADDRESS_LOW_INT_16;
+				STATE_GET_INT_16_HIGH_9:begin				
+					datasend<=SLAVE_ADDRESS_HIGH_INT_16;
 					lastStateDRIVER<= STATE_IDLE_0;
 					stateDRIVER <= STATE_STOP_7;
 				end

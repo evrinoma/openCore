@@ -85,7 +85,6 @@ set_global_assignment -name VERILOG_FILE ../../I2C/DRIVER/SLAVE_DRIVER.v
 set_global_assignment -name VERILOG_INCLUDE_FILE ../../I2C/I2C.vh
 set_global_assignment -name VERILOG_FILE ../../UTILS/DEBOUNCE.v
 set_global_assignment -name VERILOG_FILE ../../I2C/I2C_SLAVE.v
-set_global_assignment -name VERILOG_FILE ../../I2C/I2C_MASTER.v
 set_global_assignment -name VERILOG_TEST_BENCH_FILE I2C_SLAVE.vt
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
