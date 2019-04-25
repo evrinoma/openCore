@@ -1,4 +1,4 @@
-module I2C_MASTER(clk, reset, start, ready, sda, scl, send, datasend, sended, receive, datareceive, received, state);
+module I2C_MASTER(clk, reset, start, ready, sda, scl, send, datasend, sended, receive, datareceive, received);
 
 `include "I2C.vh"
 `include "../UTILS/NO_ARCH.vh"
@@ -7,7 +7,6 @@ input wire clk;					//сигнал тактовой частоты
 input wire reset;					//сигнал сброса
 input wire start;					//запустить транзакцию
 output wire ready;				//готовность контроллера I2C
-output wire[5:0] state;
 
 inout sda;							//линия передачи данных I2C 
 inout scl;							//сигнал тактирования I2C
@@ -48,7 +47,6 @@ assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому �
 assign ready = (stateSda == STATE_IDLE_0) ? 1'b1 : 1'b0;
 assign sended 		= (lockSended) 	? 1'b1 : 1'b0;
 assign received 	= (lockReceived) 	? 1'b1 : 1'b0;
-assign state = stateSda;
 
 always@(posedge clk)
 begin

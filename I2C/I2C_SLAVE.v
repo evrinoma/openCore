@@ -1,4 +1,4 @@
-module I2C_SLAVE(clk, reset, sda, scl, address, datasend, sended, datareceive, received, state, _stateScl);
+module I2C_SLAVE(clk, reset, sda, scl, address, datasend, sended, datareceive, received);
 
 `include "I2C.vh"
 `include "../UTILS/NO_ARCH.vh"
@@ -15,9 +15,6 @@ output wire sended;				//сигнал записи новой порции да�
 
 output reg[7:0] datareceive;	//регистр принятых данных по шине - полученый байт
 output wire received;			//готовность полученого байта для выгрузки
-
-output wire[5:0] state;
-output wire[5:0] _stateScl;
 
 reg zsda	= 1'b1;					//первод лини sda в состояние Z
 reg zscl	= 1'b1;					//первод лини scl в состояние Z
@@ -42,12 +39,6 @@ assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому �
 
 assign sended 		= (lockSended) 	? 1'b0 : 1'b1;
 assign received 	= (lockReceived) 	? 1'b0 : 1'b1;
-//assign state = {lastSda,stateFSM[4:0]};
-//assign state = {reset,lastSda,stateFSM[3:0]};
-assign state = stateSda;
-//assign _stateScl = count;
-//assign _stateScl = stateScl;
-assign _stateScl = {lastScl,stateScl[4:0]};
 
 always@(negedge clk)
 begin

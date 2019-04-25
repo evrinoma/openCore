@@ -36,15 +36,11 @@ output wire received;
 output wire send;
 output wire sended;
 
-
 wire[7:0] slv_datasend;
 wire slv_sended;
 wire[7:0] slv_datareceive;
 wire slv_received;
 
-wire[5:0] startMaster;
-wire[5:0] startSlave;
-wire[5:0] _stateScl;
 
 `ifdef WITH_DEBOUNCE
 	  wire resetDeBounce;
@@ -88,8 +84,7 @@ I2C_MASTER I2C_MASTER(
 	.sended(sended), 
 	.receive(receive), 
 	.datareceive(datareceive), 
-	.received(received), 
-	.state(startMaster)
+	.received(received)
 );
 
 MASTER_DRIVER MASTER_DRIVER (
@@ -131,9 +126,7 @@ I2C_SLAVE I2C_SLAVE (
 .datasend(slv_datasend), 
 .sended(slv_sended), 
 .datareceive(slv_datareceive), 
-.received(slv_received),
-.state(state), 
-._stateScl(out)
+.received(slv_received)
 );
 
 `ifdef DEBUG_SLAVE_DRIVER
@@ -141,9 +134,6 @@ I2C_SLAVE I2C_SLAVE (
 `endif
 
 SLAVE_DRIVER SLAVE_DRIVER (
-`ifdef DEBUG_SLAVE_DRIVER
-	.dstate(state), 
-`endif
 .clk(clk), 
 `ifdef WITH_DEBOUNCE
 	.reset(resetDeBounce), 

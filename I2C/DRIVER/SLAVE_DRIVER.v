@@ -1,13 +1,6 @@
-`ifndef DEBUG_SLAVE_DRIVER
-	`define DEBUG_SLAVE_DRIVER
-	`undef DEBUG_SLAVE_DRIVER
-`endif
-
 module SLAVE_DRIVER(
-`ifdef DEBUG_SLAVE_DRIVER
-dstate, 
-`endif
-clk, reset, address, datasend, sended, datareceive, received);
+clk, reset, address, datasend, sended, datareceive, received
+);
 
 `include "DRIVER.vh"
 `include "../../UTILS/NO_ARCH.vh"
@@ -23,21 +16,12 @@ input	wire received;				//
 
 output reg[6:0] address = SLAVE_ADDRESS; 		//регистр адреса устройства
 
-`ifdef DEBUG_SLAVE_DRIVER
-output wire[6:0] dstate;
-`endif
-
 reg[2:0] stateFSM;				//состояние	
 reg[3:0] stateDRIVER;	
 reg[3:0] lastStateDRIVER;
 
-
 reg lastReceived	= 1'b0;
 reg lastSended		= 1'b0;
-
-`ifdef DEBUG_SLAVE_DRIVER
-assign dstate = {stateDRIVER,stateFSM};
-`endif
 
 always@(negedge clk)
 begin
