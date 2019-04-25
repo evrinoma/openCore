@@ -1,0 +1,205 @@
+`timescale 10 ns/ 10 ps
+module I2C_MASTER_SLAVE_vlg_tst();
+
+reg clk;
+reg reset;
+
+
+// wires                                               
+wire [7:0]  out;
+wire [5:0]  state;
+wire ready;
+wire scl;
+wire sda;
+
+pullup(scl);
+pullup(sda);
+
+wire receive;
+wire received;
+wire send;
+wire sended;
+
+reg zscl;
+reg zsda;
+
+reg [7:0]data;
+reg [7:0]count;
+
+assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
+assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
+
+I2C_MASTER_SLAVE ENTITY (
+	.receive(receive),
+	.received(received),
+	.send(send),
+	.sended(sended),
+	.clk(clk), 
+	.reset(reset),
+	.out(out),
+	.ready(ready), 
+	.scl(scl),
+	.sda(sda)
+);
+
+event EVENT_GET_ID;					//цикл тестирования - получить ID чипа 
+event EVENT_INIT;
+event EVENT_RESET;
+event EVENT_ADDRESS_CHIP_ID;
+event EVENT_ACK;
+event EVENT_SCL;
+event EVENT_SDA_SCL_START;
+event EVENT_SCL_RESTART;
+event EVENT_GENERATOR_SDA_DATA;	//генератор 
+event EVENT_GENERATE_ID;			//ответ ID чипа
+
+
+always
+begin
+#1 clk = ~clk; 
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_INIT)
+			#0
+			clk = 1'b0; 
+			zscl = 1'b1;
+			zsda = 1'b1;
+			reset = 1'b1;
+			data = 8'h00;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_RESET)
+			#0
+			reset = 1'b0;
+			//при сбросе i2c master выдает готовность и сбрасывает сигналы sended и received
+			#1000
+			reset = 1'b1;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_ACK)
+			#0
+			zsda = 1'b0;
+			#250
+			zsda = 1'b1;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SDA_SCL_START)
+			#0
+			zsda = 1'b0;
+			#500
+			zscl = 1'b0;
+			#500
+			zsda = 1'b1;
+			#500
+			zscl = 1'b1;
+	end
+end
+	
+initial 
+begin
+	forever begin
+		@(EVENT_GENERATOR_SDA_DATA)
+			#0
+			//zsda = 1'b1;
+			repeat(8)
+			begin				
+				zsda = data[count] ? 1'b1: 1'b0;
+				#0	->EVENT_SCL;
+				#500
+				count = count - 1;	
+				
+			end
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_GENERATE_ID)
+			//генерируем ответ
+			data = 8'h55;
+			count = 7;			
+			#0		->EVENT_GENERATOR_SDA_DATA;			
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SCL)
+			#0
+			zscl = 1'b0;
+			#250
+			zscl = 1'b1;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SCL_RESTART)
+			#0
+			zscl = 1'b1;
+	end
+end
+
+
+initial 
+begin
+	forever begin
+		@(EVENT_ADDRESS_CHIP_ID)
+			data = 8'hEE;
+			count = 7;			
+			#0		->EVENT_GENERATOR_SDA_DATA;
+			#4000	->EVENT_SCL;
+			#0
+			zsda = 1'b1;
+			#250
+			zsda = 1'b1;
+			#10
+			zsda = 1'b1;
+			#240	
+			zsda = 1'b1;	
+			#0 ->EVENT_SCL;
+	end
+end
+
+
+initial 
+begin
+	forever begin
+		@(EVENT_GET_ID)
+			#0		->EVENT_INIT;
+			#500	->EVENT_RESET;
+			#1000 -> EVENT_SDA_SCL_START;
+			#1000		->EVENT_ADDRESS_CHIP_ID;
+	end
+end
+
+
+initial 
+begin
+#0		->EVENT_GET_ID;
+
+#45000 $stop;
+
+
+end
+	
+endmodule
+
