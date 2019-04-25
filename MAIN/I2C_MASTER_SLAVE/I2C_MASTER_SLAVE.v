@@ -47,13 +47,29 @@ wire[5:0] startSlave;
 wire[5:0] _stateScl;
 
 `ifdef WITH_DEBOUNCE
-	wire resetDeBounce;
+	  wire resetDeBounce;
+	  wire swIdDeBounce;
+	  wire swShowDeBounce;
+
 
 	DEBOUNCE resetKey( 
 	.clk(clk), 
 	.keyBounce(reset), 
 	.keyDeBounce(resetDeBounce)
 	);
+	
+	DEBOUNCE swIdKey( 
+	.clk(clk), 
+	.keyBounce(swId), 
+	.keyDeBounce(swIdDeBounce)
+	);
+	
+	DEBOUNCE swShowKey( 
+	.clk(clk), 
+	.keyBounce(swShow), 
+	.keyDeBounce(swShowDeBounce)
+	);
+	
 `endif
 
 I2C_MASTER I2C_MASTER(
@@ -75,6 +91,32 @@ I2C_MASTER I2C_MASTER(
 	.received(received), 
 	.state(startMaster)
 );
+
+MASTER_DRIVER MASTER_DRIVER (
+// port map - connection between master ports and signals/registers   
+        .clk(clk), //
+        .datareceive(datareceive),
+        .datasend(datasend), 
+        .receive(receive),
+        .received(received),
+        .send(send),
+        .sended(sended),
+        .start(start),
+`ifdef WITH_DEBOUNCE
+        .reset(resetDeBounce), 
+        .swId(swIdDeBounce), 
+        .swShow(swShowDeBounce),
+`else
+		  .swId(swId), 
+        .swShow(swShow), 
+        .reset(reset),
+
+`endif
+        .isReady(ready),
+        .out(out), 
+        .state(state)
+);
+
 
 I2C_SLAVE I2C_SLAVE (
 .clk(clk), 

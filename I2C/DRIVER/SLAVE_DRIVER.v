@@ -9,7 +9,7 @@ dstate,
 `endif
 clk, reset, address, datasend, sended, datareceive, received);
 
-`include "SLAVE_DRIVER.vh"
+`include "DRIVER.vh"
 `include "../../UTILS/NO_ARCH.vh"
 
 input wire clk;					//сигнал тактовой частоты
