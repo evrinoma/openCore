@@ -9,7 +9,7 @@ localparam STATE_GET_INT_16_HIGH_9		= 4'd9;
 localparam STATE_GET_INT_16_LOW_10		= 4'd10;
 								
 //const address chip
-localparam SLAVE_ADDRESS						= 7'h77;//1110111 address slave 
+localparam SLAVE_ADDRESS						= 7'h75;//1110101 address slave 
 localparam SLAVE_ADDRESS_CHIP_ID				= 8'hD0;//address chipId 
 localparam SLAVE_CHIP_ID						= 8'h81;//chipId slave
 localparam SLAVE_ADDRESS_GET_INT_16			= 8'h16;//get data 16 bit  

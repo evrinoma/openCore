@@ -62,17 +62,17 @@ set_global_assignment -name DEVICE_FILTER_PIN_COUNT 144
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name ENABLE_DRC_SETTINGS ON
 set_location_assignment PIN_23 -to clk
-set_location_assignment PIN_77 -to sda
+set_location_assignment PIN_75 -to sda
 set_location_assignment PIN_76 -to scl
 set_location_assignment PIN_88 -to reset
-set_location_assignment PIN_39 -to out[7]
-set_location_assignment PIN_38 -to out[6]
-set_location_assignment PIN_34 -to out[5]
-set_location_assignment PIN_33 -to out[4]
-set_location_assignment PIN_32 -to out[3]
-set_location_assignment PIN_31 -to out[2]
-set_location_assignment PIN_30 -to out[1]
-set_location_assignment PIN_28 -to out[0]
+set_location_assignment PIN_144 -to out[7]
+set_location_assignment PIN_143 -to out[6]
+set_location_assignment PIN_142 -to out[5]
+set_location_assignment PIN_141 -to out[4]
+set_location_assignment PIN_138 -to out[3]
+set_location_assignment PIN_137 -to out[2]
+set_location_assignment PIN_136 -to out[1]
+set_location_assignment PIN_135 -to out[0]
 set_global_assignment -name EDA_TEST_BENCH_NAME I2C_MASTER_SLAVE -section_id eda_simulation
 set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id I2C_MASTER_SLAVE
 set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME I2C_MASTER_SLAVE_vlg_tst -section_id I2C_MASTER_SLAVE
@@ -90,6 +90,9 @@ set_location_assignment PIN_66 -to state[5]
 set_location_assignment PIN_67 -to state[6]
 set_location_assignment PIN_68 -to state[7]
 set_global_assignment -name EDA_TEST_BENCH_FILE I2C_MASTER_SLAVE.vt -section_id I2C_MASTER_SLAVE
+set_location_assignment PIN_24 -to swId
+set_location_assignment PIN_25 -to swShow
+set_global_assignment -name VERILOG_FILE ../../UTILS/CLK_DIV.v
 set_global_assignment -name VERILOG_FILE ../../I2C/DRIVER/MASTER_DRIVER.v
 set_global_assignment -name VERILOG_INCLUDE_FILE ../../I2C/DRIVER/DRIVER.vh
 set_global_assignment -name SOURCE_FILE I2C_MASTER_SLAVE.qpf
@@ -101,4 +104,6 @@ set_global_assignment -name VERILOG_FILE ../../UTILS/DEBOUNCE.v
 set_global_assignment -name VERILOG_FILE ../../I2C/I2C_SLAVE.v
 set_global_assignment -name VERILOG_FILE ../../I2C/I2C_MASTER.v
 set_global_assignment -name VERILOG_TEST_BENCH_FILE I2C_MASTER_SLAVE.vt
+set_location_assignment PIN_73 -to _sda
+set_location_assignment PIN_74 -to _scl
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

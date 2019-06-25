@@ -1,31 +1,41 @@
 //use only to load on board Chip
 `define WITH_DEBOUNCE
 //`undef WITH_DEBOUNCE
-//`define DEBUG_SLAVE_DRIVER
 
 module I2C_MASTER_SLAVE(
 	receive,
 	received,
 	send,
 	sended,
-	clk, 
+	swId,
+	swShow,
+	clk,
 	reset, 
 	ready, 
 	scl, 
 	sda,
+	_scl, 
+	_sda,
 	out,
 	state
 );
+input		wire swId;					//кнопка режим - прочитать ID чипа BMP180
+input		wire swShow;				//кнопка режим - прочитать показать принятые данные
 
 input 	wire clk;					//сигнал тактовой частоты
 input 	wire reset;					//сигнал сброса
 
 output	wire [7:0] out;			//данные
-output	wire [7:0] state;			//данные
+output	wire [5:0] state;			//данные
+wire [7:0] stateMaster;			//данные
+wire [5:0] stateSlave;			//данные
 output	wire ready;					//готовность контроллера I2C
 
 inout 	sda;							//линия передачи данных I2C 
 inout 	scl;							//сигнал тактирования I2C
+
+inout 	_sda;							//линия передачи данных I2C 
+inout 	_scl;							//сигнал тактирования I2C
 
 wire [7:0] datareceive;
 wire [7:0] datasend;
@@ -40,7 +50,7 @@ wire[7:0] slv_datasend;
 wire slv_sended;
 wire[7:0] slv_datareceive;
 wire slv_received;
-
+wire clk_slave;
 
 `ifdef WITH_DEBOUNCE
 	  wire resetDeBounce;
@@ -109,9 +119,13 @@ MASTER_DRIVER MASTER_DRIVER (
 `endif
         .isReady(ready),
         .out(out), 
-        .state(state)
+        .state(stateMaster)
 );
 
+//DIV_CLK(
+//.clk(clk), 
+//.freqMhz(clk_slave)
+//);
 
 I2C_SLAVE I2C_SLAVE (
 .clk(clk), 
@@ -120,18 +134,15 @@ I2C_SLAVE I2C_SLAVE (
 `else
 	.reset(reset), 
 `endif
-.sda(sda), 
-.scl(scl), 
+.sda(_sda), 
+.scl(_scl), 
 .address(address),
 .datasend(slv_datasend), 
 .sended(slv_sended), 
 .datareceive(slv_datareceive), 
-.received(slv_received)
+.received(slv_received),
+.state(state)
 );
-
-`ifdef DEBUG_SLAVE_DRIVER
-	wire[6:0] dstate;
-`endif
 
 SLAVE_DRIVER SLAVE_DRIVER (
 .clk(clk), 

@@ -106,8 +106,7 @@ I2C_MASTER I2C_MASTER(
 	.sended(sended), 
 	.receive(receive), 
 	.datareceive(datareceive), 
-	.received(received), 
-	.state(stateIC)
+	.received(received)
 );
 
 // assign statements (if any)                          
