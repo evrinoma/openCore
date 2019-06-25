@@ -11,7 +11,7 @@ localparam  DIV2_78MHZ	= 5'd8;
 localparam  DIV5MHZ		= 5'd4;
 localparam  DIV12_5MHZ	= 5'd1;
 
-localparam  DIV_MHZ		= DIV2_5MHZ;
+localparam  DIV_MHZ		= DIV5MHZ;
 
 reg[4:0] div = MIN;
 

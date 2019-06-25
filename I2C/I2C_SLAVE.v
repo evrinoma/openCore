@@ -64,8 +64,11 @@ assign sended 		= (lockSended) 	? 1'b0 : 1'b1;
 assign received 	= (lockReceived) 	? 1'b0 : 1'b1;
 
 `ifdef I2C_SLAVE_DEBUG
-assign stateDSda = stateSda;
+assign stateDSda = stateScl;
+//assign stateDSda = stateSda;
 //assign stateDSda = {datareceive[7],datareceive[6],datareceive[5],datareceive[4],datareceive[3],datareceive[2]};
+//assign stateDFSM = stateSda;
+//assign stateDFSM = stateScl;
 assign stateDFSM = stateFSM;
 //assign stateDFSM = {datareceive[7],datareceive[6],datareceive[5],datareceive[4],datareceive[3],datareceive[2]};
 assign stateDTopSda = topSda;
@@ -242,21 +245,6 @@ else
 							end
 					end
 					STATE_WAIT_GEN_ACK_ADR_34: begin  			//если адрес не наш то переходим в ожидание, если наш то запоминаем операцию 
-//									if (datareceive[7:1] == address)
-//										begin
-//											rw <= datareceive[0];
-//											zsda	<= 1'b0;
-//											if (stateScl == STATE_GEN_ACK_35)
-//												begin 
-//													stateSda <=STATE_GEN_ACK_35;
-//												end
-//										end
-//									else
-//										begin
-//											stateSda <= STATE_IDLE_0;
-//										end
-//								
-//								count <= COUNT_MAX4;
 								if (stateScl == STATE_GEN_ACK_35)
 								begin
 									stateSda <= (datareceive[7:1] == address) ? STATE_GEN_ACK_35:STATE_IDLE_0;
