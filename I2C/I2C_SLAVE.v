@@ -48,14 +48,18 @@ reg[7:0] delay = ZERO8; 		//
 reg[5:0] stateFSM;				//отслеживание начала и окончание транзакции
 
 wire topSda;
+wire middleSda;
 wire bottomSda;
+wire topScl;
+wire bottomScl;
 
 reg lastScl	= 1'b1;
 reg lockReceived	= 1'b1;
 reg lockSended		= 1'b1;
 reg ack		= 1'b1;
 
-reg [2:0]syncSda;
+reg [3:0]syncSda;
+reg [2:0]syncScl;
 
 assign sda = (zsda) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
 assign scl = (zscl) ? 1'bz : 1'b0;// 1'bz монтажное И поэтому тут не может быть высокого уровня
@@ -71,7 +75,8 @@ assign stateDSda = stateScl;
 //assign stateDFSM = stateScl;
 assign stateDFSM = stateFSM;
 //assign stateDFSM = {datareceive[7],datareceive[6],datareceive[5],datareceive[4],datareceive[3],datareceive[2]};
-assign stateDTopSda = topSda;
+//assign stateDTopSda = topSda;
+assign stateDTopSda = bottomScl;
 assign stateDBottomSda = bottomSda;
 assign stateDzsda = zsda;
 `endif
@@ -80,16 +85,33 @@ always @(posedge clk)
 begin
 	if (!reset)
 		begin
-			syncSda <= 3'b111;
+			syncSda <= 4'b1111;
 		end
 	else
 		begin
-			syncSda <= { syncSda[1], syncSda[0],  sda };
+			syncSda <= { syncSda[2], syncSda[1], syncSda[0],  sda };
 		end
 end
 
 assign bottomSda = syncSda[1];
-assign topSda = syncSda[2];
+assign middleSda = syncSda[2];
+assign topSda = syncSda[3];
+
+
+always @(posedge clk)
+begin
+	if (!reset)
+		begin
+			syncScl <= 3'b111;
+		end
+	else
+		begin
+			syncScl <= { syncScl[1], syncScl[0],  scl };
+		end
+end
+
+assign bottomScl = syncScl[1];
+assign topScl = syncScl[2];
 
 always@(negedge clk)
 begin
@@ -104,7 +126,7 @@ begin
 				STATE_IDLE_0:begin		
 					if (zsda)		//старт, рестарт или стоп может быть только тогда когда ведомый не управляет шиной sda
 						begin
-							case ({bottomSda,sda,scl})	
+							case ({middleSda,bottomSda,scl})	
 							3'b101:begin 
 										stateFSM <= STATE_WAIT_START_10;
 									 end
@@ -119,7 +141,7 @@ begin
 					delay <= ZERO8;
 				end
 				STATE_WAIT_START_10:begin	
-					if ({topSda,bottomSda,scl} == 3'b001)
+					if ({topSda,middleSda,scl} == 3'b001)
 						begin
 							stateFSM <= STATE_START_11;								
 						end	
@@ -316,7 +338,6 @@ begin
 	if (!reset)
 		begin
 			stateScl <= STATE_IDLE_0;
-			lastScl <= 1'b1;
 			zscl	<= 1'b1;
 		end
 	else
@@ -324,98 +345,76 @@ begin
 			case (stateSda)		
 				STATE_IDLE_0: begin
 					stateScl <= STATE_IDLE_0;
-					lastScl <= 1'b1;
 				end
 
 				STATE_PREPARE_RECEIVE_ADR_43: begin
-					if ({lastScl,scl} == 2'b01)
+					if ({topScl,bottomScl} == 2'b01)
 						begin
 							stateScl <= STATE_RECEIVE_ADR_44;
-						end
-					else
-						lastScl <= scl;						
+						end					
 				end
 				STATE_RECEIVE_ADR_44: begin
-					if ({lastScl,scl} == 2'b10)
+					if ({topScl,bottomScl} == 2'b10)
 						begin
 							stateScl <= STATE_PREPARE_RECEIVE_ADR_43;
 						end
-					else
-						lastScl <= scl;
 				end	
 				
 				STATE_PREPARE_RECEIVE_41: begin	
-					if ({lastScl,scl} == 2'b01)
+					if ({topScl,bottomScl} == 2'b01)
 						begin
 							stateScl <= STATE_RECEIVE_42;
-						end
-					else
-						lastScl <= scl;				
+						end		
 				end	
 				STATE_RECEIVE_42: begin	
-					if ({lastScl,scl} == 2'b10)
+					if ({topScl,bottomScl} == 2'b10)
 						begin
 							stateScl <= STATE_PREPARE_RECEIVE_41;
-						end
-					else
-						lastScl <= scl;					
+						end			
 				end
 				
 				STATE_PREPARE_SEND_21: begin	
-					if ({lastScl,scl} == 2'b01)
+					if ({topScl,bottomScl} == 2'b01)
 						begin
 							stateScl <= STATE_SEND_22;
-						end
-					else
-						lastScl <= scl;						
+						end					
 				end	
 				STATE_SEND_22: begin
-					if ({lastScl,scl} == 2'b10)
+					if ({topScl,bottomScl} == 2'b10)
 						begin
 							stateScl <= STATE_PREPARE_SEND_21;
 						end
-					else
-						lastScl <= scl;
 				end
 				
 				STATE_WAIT_GEN_ACK_ADR_34,
 				STATE_WAIT_GEN_ACK_32: begin
-					if ({lastScl,scl} == 2'b01)
+					if ({topScl,bottomScl} == 2'b01)
 						begin
 							stateScl <= STATE_GEN_ACK_35;
 						end
-					else
-						lastScl <= scl;
 				end
 				
 				STATE_GEN_ACK_35: begin	
-					if ({lastScl,scl} == 2'b10)
+					if ({topScl,bottomScl} == 2'b10)
 						begin
 							stateScl <= (rw) ? STATE_PREPARE_SEND_21:STATE_PREPARE_RECEIVE_41;
 						end
-					else
-						lastScl <= scl;
 				end
 				
 				STATE_WAIT_ACK_31: begin
-					if ({lastScl,scl} == 2'b01)
+					if ({topScl,bottomScl} == 2'b01)
 						begin
 							stateScl <= STATE_WAIT_ACK_31;
 						end
-					else
-						lastScl <= scl;
 				end
 				
 				STATE_ACK_33: begin
-					if ({lastScl,scl} == 2'b10)
+					if ({topScl,bottomScl} == 2'b10)
 						begin
 							stateScl <= STATE_ACK_33;
-						end
-					else
-						lastScl <= scl;						
+						end						
 				end
 			endcase	
-			zscl	<= 1'b1;		
 		end
 end
 

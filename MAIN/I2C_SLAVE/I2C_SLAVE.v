@@ -1,8 +1,8 @@
 //use only to load on board Chip
 `define WITH_DEBOUNCE
-`define WITH_CLK_DIV
+//`define WITH_CLK_DIV
 `define I2C_SLAVE_DEBUG
-//`undef WITH_CLK_DIV
+`undef WITH_CLK_DIV
 //`undef WITH_DEBOUNCE
 //`undef I2C_SLAVE_DEBUG
 
