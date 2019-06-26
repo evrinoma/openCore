@@ -14,8 +14,6 @@ module I2C_MASTER_SLAVE(
 	ready, 
 	scl, 
 	sda,
-	_scl, 
-	_sda,
 	out,
 	state
 );
@@ -33,9 +31,6 @@ output	wire ready;					//готовность контроллера I2C
 
 inout 	sda;							//линия передачи данных I2C 
 inout 	scl;							//сигнал тактирования I2C
-
-inout 	_sda;							//линия передачи данных I2C 
-inout 	_scl;							//сигнал тактирования I2C
 
 wire [7:0] datareceive;
 wire [7:0] datasend;
@@ -122,11 +117,6 @@ MASTER_DRIVER MASTER_DRIVER (
         .state(stateMaster)
 );
 
-//DIV_CLK(
-//.clk(clk), 
-//.freqMhz(clk_slave)
-//);
-
 I2C_SLAVE I2C_SLAVE (
 .clk(clk), 
 `ifdef WITH_DEBOUNCE
@@ -134,14 +124,13 @@ I2C_SLAVE I2C_SLAVE (
 `else
 	.reset(reset), 
 `endif
-.sda(_sda), 
-.scl(_scl), 
+.sda(sda), 
+.scl(scl), 
 .address(address),
 .datasend(slv_datasend), 
 .sended(slv_sended), 
 .datareceive(slv_datareceive), 
-.received(slv_received),
-.state(state)
+.received(slv_received)
 );
 
 SLAVE_DRIVER SLAVE_DRIVER (
