@@ -1,5 +1,5 @@
 `ifndef I2C_SLAVE_DEBUG
-	`define I2C_SLAVE_DEBUG
+	//`define I2C_SLAVE_DEBUG
 `endif
 
 module I2C_SLAVE(
