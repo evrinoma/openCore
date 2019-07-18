@@ -1,0 +1,168 @@
+// Copyright (C) 2018  Intel Corporation. All rights reserved.
+// Your use of Intel Corporation's design tools, logic functions 
+// and other software and tools, and its AMPP partner logic 
+// functions, and any output files from any of the foregoing 
+// (including device programming or simulation files), and any 
+// associated documentation or information are expressly subject 
+// to the terms and conditions of the Intel Program License 
+// Subscription Agreement, the Intel Quartus Prime License Agreement,
+// the Intel FPGA IP License Agreement, or other applicable license
+// agreement, including, without limitation, that your use is for
+// the sole purpose of programming logic devices manufactured by
+// Intel and sold by Intel or its authorized distributors.  Please
+// refer to the applicable agreement for further details.
+
+// *****************************************************************************
+// This file contains a Verilog test bench template that is freely editable to  
+// suit user's needs .Comments are provided in each section to help the user    
+// fill out necessary details.                                                  
+// *****************************************************************************
+// Generated on "07/18/2019 12:05:41"
+                                                                                
+// Verilog Test Bench template for design : FIFO
+// 
+// Simulation tool : ModelSim-Altera (Verilog)
+// 
+
+`timescale 10 ns/ 10 ps
+module fifo_vlg_tst();
+// constants                                           
+integer data;
+
+// test vector input registers
+reg clk;
+reg [7:0] dataIn;
+reg get;
+reg put;
+reg reset;
+// wires                                               
+wire [7:0]  dataOut;
+wire isEmpty;
+wire isFull;
+
+// assign statements (if any)                          
+FIFO i1 (
+// port map - connection between master ports and signals/registers   
+	.clk(clk),
+	.dataIn(dataIn),
+	.dataOut(dataOut),
+	.get(get),
+	.isEmpty(isEmpty),
+	.isFull(isFull),
+	.put(put),
+	.reset(reset)
+);
+
+event EVENT_INIT;
+event EVENT_RESET;
+event EVENT_PUT;
+event EVENT_GET;
+event EVENT_COLL;
+
+always
+begin
+#5 clk = ~clk; //1MHz
+end
+
+initial 
+begin
+	  forever begin
+				 @(EVENT_INIT)
+							#0
+							clk = 1'b0; 
+							get = 1'b0;
+							put = 1'b0;		
+							data = 77;
+	  end
+end
+
+initial 
+begin
+	 forever begin
+				 @(EVENT_RESET)
+							#0
+							reset = 1'b0;
+							#1000
+							reset = 1'b1;							
+	  end
+end
+
+initial 
+begin
+	  forever begin
+				 @(EVENT_PUT)
+							#0 
+							data = data+1;
+							dataIn = data;
+							#100
+							put = 1'b1;
+							#100 
+							put = 1'b0;
+	  end
+end
+
+initial 
+begin
+	  forever begin
+				 @(EVENT_GET)
+							#0
+							get = 1'b1;
+							#100 
+							get = 1'b0;
+	  end
+end
+
+initial 
+begin
+	  forever begin
+				 @(EVENT_COLL)
+							#0
+							data = data+1;
+							dataIn = data;							
+							get = 1'b1;
+							put = 1'b1;
+							#100
+							get = 1'b0;
+							put = 1'b0;
+	  end
+end
+
+
+initial 
+begin
+#0    ->EVENT_INIT;
+#500  ->EVENT_RESET;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_COLL;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_GET;
+
+#500  ->EVENT_RESET;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_PUT;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_GET;
+#1000 ->EVENT_GET;
+
+#10000 $stop;
+
+end
+                                     
+endmodule
+

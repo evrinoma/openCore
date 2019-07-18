@@ -72,6 +72,6 @@
 !MAIN/I2C_BMP180_SLAVE/*.qsf
 !MAIN/I2C_BMP180_SLAVE/*.qpf
 !MAIN/I2C_BMP180_SLAVE/*.logicdata
-
+!UTILS/*
 
 
