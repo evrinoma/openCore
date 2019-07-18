@@ -1,0 +1,191 @@
+`timescale 10 ns/ 10 ps
+module MASTER_DRIVER_vlg_tst();
+
+// test vector input registers
+reg clk;
+reg [7:0] datareceive;
+reg isReady;
+reg received;
+reg sended;
+reg reset;
+reg swId;
+reg swShow;
+reg [6:0] address;
+reg [15:0] length;
+reg loadAddress;
+reg loadLength;
+
+reg toPut;
+reg [7:0]  dataTo;
+
+// wires                                               
+wire [7:0]  datasend;
+wire receive;
+wire send;
+wire start;
+
+MASTER_DRIVER MASTER_DRIVER (
+// port map - connection between master ports and signals/registers   
+	.clk(clk), //
+	.datareceive(datareceive),
+	.datasend(datasend), 
+	.receive(receive),
+	.received(received),
+	.send(send),
+	.sended(sended),
+	.start(start),
+	.swId(swId), 
+	.swShow(swShow), 
+	.reset(reset),
+	.isReady(isReady),
+	.address(address),
+	.length(length),
+	.loadAddress(loadAddress),
+	.loadLength(loadLength),
+	.toPut(toPut),
+	.dataTo(dataTo)
+);
+
+always
+begin
+#5 clk = ~clk; //1MHz
+end
+
+event EVENT_INIT;
+event EVENT_RESET;
+event EVENT_SW_ID;
+event EVENT_SENDED;
+event EVENT_RECEIVED;
+event EVENT_SAVE_ADR;
+event EVENT_SAVE_LEN;
+event EVENT_PUT_FIFO_TO;
+
+initial 
+begin
+	forever begin
+		@(EVENT_INIT)
+			#0
+			clk = 1'b0; 
+			swId = 1'b1;
+			swShow = 1'b1;
+			loadAddress = 1'b0;
+			loadLength = 1'b0;
+			toPut<=1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_RESET)
+			#0
+			reset = 1'b0;
+			//при сбросе i2c master выдает готовность и сбрасывает сигналы sended и received
+			isReady = 1'b1;
+			received = 1'b0;
+			sended = 1'b0;
+			#1000
+			reset = 1'b1;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SENDED)
+			#0 
+			sended = 1'b1;
+			#100 
+			sended = 1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_RECEIVED)
+			#0 
+			datareceive = 8'h77;
+			#100
+			received = 1'b1;
+			#100 
+			received = 1'b0;
+	end
+end
+	
+initial 
+begin
+	forever begin
+		@(EVENT_SW_ID)
+			#500
+			swId = 1'b0;
+			#2500
+			swId = 1'b1;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SAVE_ADR)
+			#0
+			address = 7'h77;
+			#100
+			loadAddress = 1'b1;
+			#100
+			loadAddress = 1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SAVE_LEN)
+			#0
+			length = 16'h0002;
+			#100
+			loadLength = 1'b1;
+			#100
+			loadLength = 1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_PUT_FIFO_TO)
+			#0
+			dataTo = 8'hD0;
+			#5
+			toPut<=1'b1;
+			#10
+			toPut<=1'b0;
+			#10
+			dataTo = 8'hEF;
+			#5
+			toPut<=1'b1;
+			#10
+			toPut<=1'b0;
+	end
+end
+
+
+initial 
+begin
+#0		->EVENT_INIT;
+#500	->EVENT_RESET;
+#900	->EVENT_SAVE_ADR;
+#1000	->EVENT_SAVE_LEN;
+#1100	->EVENT_PUT_FIFO_TO;
+#2500	->EVENT_SW_ID;
+#5000 ->EVENT_SENDED;
+#5000 ->EVENT_SENDED;
+#5000 ->EVENT_SENDED;
+#5000 ->EVENT_RECEIVED;
+#5000 ->EVENT_RECEIVED;
+#5000 ->EVENT_RECEIVED;
+#10000 $stop;
+end
+                                                   
+endmodule
+
