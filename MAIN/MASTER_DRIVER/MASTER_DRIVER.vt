@@ -9,7 +9,7 @@ reg received;
 reg sended;
 reg reset;
 reg [6:0] address;
-reg [15:0] length;
+reg [31:0] length;
 reg [15:0] control;
 reg loadAddress;
 reg loadLength;
@@ -207,7 +207,7 @@ begin
 	forever begin
 		@(EVENT_SAVE_LEN)
 			#0
-			length = 16'h0001;
+			length = 31'h00010001;
 			#100
 			loadLength = 1'b1;
 			#100
