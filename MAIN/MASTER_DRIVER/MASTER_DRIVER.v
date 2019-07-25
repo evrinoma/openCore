@@ -90,16 +90,20 @@ localparam RESTART			= 1'h1; 		//режим рестарт для i2c масте
 localparam SEND				= 1'h1; 		//
 localparam RECEIVE			= 1'h1; 		//
 
+
+
 localparam STATE_IDLE_0						= 6'd0;		//состояние ожидани выбора команды
-localparam STATE_INIT_11					= 6'd11;
+localparam STATE_WAIT_READY_11			= 6'd11;
 localparam STATE_INIT_READ_12				= 6'd12;
 localparam STATE_INIT_WRITE_13			= 6'd13;
-localparam STATE_WAIT_READY_14			= 6'd14;
-localparam STATE_GEN_START_15				= 6'd15;
-localparam STATE_DEC_LENGTH_16			= 6'd16;
-localparam STATE_INC_LENGTH_17			= 6'd17;
+localparam STATE_DEC_LENGTH_LOW_14			= 6'd14;
+localparam STATE_INC_LENGTH_LOW_15			= 6'd15;
+localparam STATE_DEC_LENGTH_HIGH_16			= 6'd16;
+localparam STATE_INC_LENGTH_HIGH_17			= 6'd17;
 
-localparam STATE_WAIT_START_DATA_SEND_19		= 6'd19;
+
+
+localparam STATE_NOP_START_DATA_SEND_19		= 6'd19;
 localparam STATE_START_DATA_SEND_20		= 6'd20;
 localparam STATE_START_PREPARE_SEND_21	= 6'd21;
 localparam STATE_RESTART_PREPARE_SEND_26	= 6'd21;
@@ -120,9 +124,12 @@ localparam STATE_END_43						= 6'd43;
 localparam RESET_ST			= 16'hFF7F;					//сброс бита старта
 localparam DELAY_START		= 16'h000F;
 localparam NULL_16			= 16'h0000;
+localparam NULL_32			= 32'h00000000;
 localparam ONE_16				= 16'h0001;
 localparam NULL_8				= 8'h00;
 localparam NULL_7				= 7'h00;
+localparam HIGH_HALF_16		= 16'hFF00;
+localparam LOW_HALF_16		= 16'h00FF;
 
 localparam TYPE_R			= 2'd1;
 localparam TYPE_W			= 2'd2;
@@ -148,11 +155,10 @@ reg			loadControlSt;		//защелкнуть сигнал управления S
 //register length 
 //  31..16 			15..00
 //[ length Read	length Write]
-reg[15:0]	cont;
-reg[6:0]		addr;
 
-reg[31:0]	len;
-
+reg[15:0]	cont;				//регистр управления контроллером 
+reg[6:0]		addr;				//регистр адресата 
+reg[31:0]	len;				//регистр кол-ва передаваемых байт 
 reg[7:0]		data;
 
 reg 			lockStart;
@@ -188,7 +194,7 @@ else
 			STATE_IDLE_0:begin			
 				if (cont[7] && !loadControl) 				//если установлен бит запуска и запись в регистр завершена то запускаем процесс передачи
 					begin
-						stateFSM			<= STATE_WAIT_READY_14;						
+						stateFSM			<= STATE_WAIT_READY_11;						
 						loadControlSt	<=	1'b1;
 					end
 				else 
@@ -196,6 +202,23 @@ else
 						lastSended		<= 1'b0;
 						lastReceived	<= 1'b0;
 						loadControlSt <=	1'b0;
+					end
+			end
+			STATE_WAIT_READY_11:begin				//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
+				if (isReady) 
+					begin						
+						loadControlSt <=	1'b0;
+						case (cont[1:0])				//определяем тип тразакции
+							TYPE_R:begin
+										saveStateFSM 	<= STATE_NOP_START_DATA_SEND_19;
+										stateFSM 	<= STATE_INIT_READ_12;
+									 end
+							TYPE_W,
+							TYPE_WR:begin
+										saveStateFSM 	<= STATE_NOP_START_DATA_SEND_19;
+										stateFSM 	<= STATE_INIT_WRITE_13;	
+									 end
+						endcase
 					end
 			end
 			STATE_INIT_READ_12:begin
@@ -206,24 +229,7 @@ else
 				data 	<= {addr,!READ};
 				stateFSM 	<= saveStateFSM;
 			end
-			STATE_WAIT_READY_14:begin						//переходим в режим обработки запросов автомата I2C, только после того как он сообщит нам что он простаивает
-				if (isReady) 
-					begin						
-						loadControlSt <=	1'b0;
-						case (cont[1:0])				//определяем тип тразакции
-							TYPE_R:begin
-										saveStateFSM 	<= STATE_WAIT_START_DATA_SEND_19;
-										stateFSM 	<= STATE_INIT_READ_12;
-									 end
-							TYPE_W,
-							TYPE_WR:begin
-										saveStateFSM 	<= STATE_WAIT_START_DATA_SEND_19;
-										stateFSM 	<= STATE_INIT_WRITE_13;	
-									 end
-						endcase
-					end
-			end
-			STATE_WAIT_START_DATA_SEND_19:begin				//разрешаем данные для обработки и формируем сигнал start если он задан				
+			STATE_NOP_START_DATA_SEND_19:begin			//разрешаем данные для обработки и формируем сигнал start если он задан				
 																	//генерируем сигнал новой порции данных
 					stateFSM 	<= STATE_START_DATA_SEND_20;
 			end
@@ -250,18 +256,18 @@ else
 				endcase
 				lastSended <= sended;
 			end
-			STATE_DEC_LENGTH_16:begin
+			STATE_DEC_LENGTH_LOW_14:begin
 				stateFSM<=saveStateFSM;	
 			end
-			STATE_INC_LENGTH_17:begin
+			STATE_INC_LENGTH_LOW_15:begin
 				stateFSM<=STATE_INIT_READ_12;	
 			end
 			STATE_SEND_24:begin								//получен сигнал от местера что он хочетновую порцию данных
-					if (len == NULL_16)	
+					if (len[15:0] == NULL_16)	
 						begin
 							if (cont[1:0] == TYPE_WR) 						//передали все данные - проверяем режим - 
 								begin												//если это режим записи с рестартом и чтением
-									stateFSM 	<=STATE_INC_LENGTH_17;		
+									stateFSM 	<=STATE_INC_LENGTH_LOW_15;		
 									saveStateFSM 	<= STATE_RESTART_PREPARE_SEND_26;
 								end
 							else
@@ -272,7 +278,7 @@ else
 					else
 						begin		//
 							saveStateFSM <= STATE_UNLOCK_DATA_SEND_22;	//сохраняем состояние, в которое нужно перейти в новом сосотянии - отправка данных
-							stateFSM 	<=STATE_DEC_LENGTH_16;				//переходим в новое состояние и уменьшание счетчик отправляемых байт на единицу
+							stateFSM 	<=STATE_DEC_LENGTH_LOW_14;				//переходим в новое состояние и уменьшание счетчик отправляемых байт на единицу
 						end
 			end
 			
@@ -348,7 +354,7 @@ begin
 						delayStart	<= DELAY_START;	
 						lockDataSend	<= 1'b1;
 				end
-				STATE_WAIT_START_DATA_SEND_19:begin										
+				STATE_NOP_START_DATA_SEND_19:begin										
 						lockSend		<= 1'b0;	
 						lockReceive	<= 1'b1;
 						lockDataSend	<= 1'b0;
@@ -378,7 +384,7 @@ begin
 					lockReceive	<= 1'b0;
 				end
 				STATE_PREPARE_SEND_23:begin
-					if (len == NULL_16 & cont[1:0] == TYPE_WR & !lockSend) 
+					if (len[15:0] == NULL_16 & cont[1:0] == TYPE_WR & !lockSend) 
 					begin
 						delayStart	<= NULL_16;
 					end
@@ -387,9 +393,11 @@ begin
 				end
 				STATE_INIT_READ_12,
 				STATE_INIT_WRITE_13,
-				STATE_WAIT_READY_14,
-				STATE_DEC_LENGTH_16,
-				STATE_INC_LENGTH_17,
+				STATE_WAIT_READY_11,
+				STATE_DEC_LENGTH_LOW_14,
+				STATE_INC_LENGTH_LOW_15,
+				STATE_DEC_LENGTH_HIGH_16,
+				STATE_INC_LENGTH_HIGH_17,
 				STATE_START_PREPARE_SEND_21,
 				STATE_RESTART_PREPARE_SEND_26,
 				STATE_UNLOCK_DATA_SEND_22,
@@ -440,20 +448,28 @@ always@(negedge clk)
 begin
 if (!reset) 
 	begin			
-		len <= NULL_16;	
+		len <= NULL_32;	
 	end
 else
 	if (loadLength)
 		begin
 			len <= length;
 		end
-	if (stateFSM == STATE_DEC_LENGTH_16 & len != NULL_16)
+	if (stateFSM == STATE_DEC_LENGTH_LOW_14 & len[15:0] != NULL_16)
 		begin
-			len <= len - ONE_16;
+			len[15:0] <= len[15:0] - ONE_16;
 		end
-	else if (stateFSM == STATE_INC_LENGTH_17 & len == NULL_16)
+	else if (stateFSM == STATE_INC_LENGTH_LOW_15 & len[15:0] == NULL_16)
 		begin
-			len <= len + ONE_16;
+			len[15:0] <= len[15:0] + ONE_16;
+		end
+	if (stateFSM == STATE_DEC_LENGTH_HIGH_16 & len[15:0] != NULL_16)
+		begin
+			len[15:0] <= len[15:0] - ONE_16;
+		end
+	else if (stateFSM == STATE_INC_LENGTH_HIGH_17 & len[15:0] == NULL_16)
+		begin
+			len[15:0] <= len[15:0] + ONE_16;
 		end
 end
 
