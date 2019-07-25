@@ -58,7 +58,7 @@ begin
 		begin
 			if (start) 
 				begin
-					stateStart <= START_1;								
+					stateStart <= START_1;
 				end
 			else
 				begin
@@ -69,7 +69,7 @@ begin
 				end
 		end
 end 
-		
+
 always@(posedge clk)
 begin
 	if (!reset)
@@ -80,7 +80,7 @@ begin
 			rw		<= 1'b0;
 			ask	<= 1'b1;
 			
-			lockSended		<= 1'b0;		
+			lockSended		<= 1'b0;
 			lockReceived	<= 1'b0;
 			
 			count 			<= COUNT_MAX4;
@@ -88,7 +88,7 @@ begin
 			waitSend			<= 1'b0;
 			waitReceive		<= 1'b0;
 			
-			receivedBit		<= 1'b1;	
+			receivedBit		<= 1'b1;
 		end
 	else
 		begin
@@ -96,7 +96,7 @@ begin
 			STATE_IDLE_0: begin
 				if (stateStart == START_1) 
 					begin
-						stateSda <= STATE_START_11;						
+						stateSda <= STATE_START_11;
 					end
 				else
 					begin
@@ -104,18 +104,18 @@ begin
 					end
 				zsda	<= 1'b1;							//линия sda в состоянии z
 				count <= COUNT_MAX4;							//счетчик передачи бит указывает на старший бит, так с него начинаем передачу данных
-				ask	<= 1'b1;							//сбрасываем бит подтвержедния приема данных ведомым				
+				ask	<= 1'b1;							//сбрасываем бит подтвержедния приема данных ведомым
 				lockSended		<= 1'b0;				//сбрасываем сигнал уведомелния о передачи порции данных
 				lockReceived	<= 1'b0;				//сбрасываем сигнал уведомления о приеме порции данных
 				waitSend			<= 1'b0;				//сбрасываем сигнал передачи в ведомого новой порции данных
-				waitReceive		<= 1'b0;				//сбрасываем сигнал приема с ведомого новой порции данных	
-				receivedBit		<= 1'b1;			
+				waitReceive		<= 1'b0;				//сбрасываем сигнал приема с ведомого новой порции данных
+				receivedBit		<= 1'b1;
 			end
 			STATE_START_11: begin						//начальная последовательность sda = 0 scl = 1 задержка sda = 0 scl = 0 задержка
 				if (stateScl == STATE_START_11) 
 					begin 								//ожидаем когда закончится этап старта
-						stateSda <= STATE_PREPARE_SEND_21;	
-						rw	<=	datasend[0];				//устанавливаем режим чтение или запись						
+						stateSda <= STATE_PREPARE_SEND_21;
+						rw	<=	datasend[0];				//устанавливаем режим чтение или запись
 					end
 				zsda	<= 1'b0;	
 				lockSended		<= 1'b0;							//сбрасываем сигнал уведомелния о передачи порции данных
@@ -131,10 +131,10 @@ begin
 			STATE_RESTART_13: begin
 				if (stateScl == STATE_RESTART_13) 
 					begin 								//ожидаем когда закончится этап старта
-						stateSda <= STATE_PREPARE_SEND_21;	
-						rw	<=	datasend[0];			//устанавливаем режим чтение или запись						
+						stateSda <= STATE_PREPARE_SEND_21;
+						rw	<=	datasend[0];			//устанавливаем режим чтение или запись
 					end
-				zsda	<= 1'b0;	
+				zsda	<= 1'b0;
 				lockSended		<= 1'b0;							//сбрасываем сигнал уведомелния о передачи порции данных
 				lockReceived	<= 1'b0;							//сбрасываем сигнал уведомления о приеме порции данных  
 			end    		
@@ -145,9 +145,9 @@ begin
 						count <= count - 4'd1;		//уменьшаем счетчик передачи бит 
 					end
 				if (datasend[count] == 1)			//переключаем линию sda в ноль, если отправляемый бит равен нулю
-					zsda	<= 1'b1;	
+					zsda	<= 1'b1;
 				else
-					zsda	<= 1'b0;	
+					zsda	<= 1'b0;
 			end
 			STATE_SEND_22: begin
 				if (stateScl == STATE_SEND_22) 
@@ -156,7 +156,7 @@ begin
 							begin
 								stateSda <= STATE_WAIT_ACK_31;	//преходим в состояние приема ответа ACK или NACK
 								waitSend<= 1'b0;						//сбрасываем сигнал передачи в ведомого новой порции данных
-								waitReceive<= 1'b0;					//сбрасываем сигнал приема с ведомого новой порции данных	
+								waitReceive<= 1'b0;					//сбрасываем сигнал приема с ведомого новой порции данных
 								count <= COUNT_MAX4;
 							end
 						else
@@ -167,17 +167,17 @@ begin
 				if (waitSend == 1'b1 || waitReceive ==  1'b1)
 						zsda	<= 1'b0;
 				else
-						zsda	<= 1'b1;	
+						zsda	<= 1'b1;
 				lockReceived	<= 1'b1;								//выставляем сигнал уведомления о передачи порции данных - готовность устройства к принятию новой порции данных	
 				//внешний источник должен выставлять сигналы send или receive так как нельзя положиться на анализ бита rw
 				if (send)										//фиксируем наличие высокого уровея на линии send, дополнительная порция информации будет отправлена в ведомый
-						waitSend <= 1'b1;							
+						waitSend <= 1'b1;
 				if (receive)									//фиксируем наличие высокого уровня на линии receive, дополнительная порция информации будет принята с ведомого
 						waitReceive <= 1'b1;
 				if (stateScl == STATE_WAIT_GEN_ACK_32) 
 					begin 										//ожидаем когда начнется этап приема данных подтверждения
-						stateSda <= STATE_PREPARE_STRETCH_55;	
-						ask	<= 1'b1;							
+						stateSda <= STATE_PREPARE_STRETCH_55;
+						ask	<= 1'b1;
 					end
 			end	
 			STATE_WAIT_ACK_31: begin
@@ -197,18 +197,18 @@ begin
 			//Clock stretching
 			STATE_ACK_33: begin
 				if (stateScl == STATE_ACK_33) 
-					begin 				
+					begin
 						if (!ask) 
 							begin									//если пришло подтвреждение от ведомого
 								if (stateStart == START_1) 
 									begin
-										stateSda <= STATE_WAIT_RESTART_12;						
+										stateSda <= STATE_WAIT_RESTART_12;
 									end
 								else
 									begin
 										if (rw)							//чтение данных из ведомого
-											begin						
-												if (waitReceive) 			
+											begin
+												if (waitReceive)
 													begin	
 														waitReceive <= 1'b0;						//сбрасываем сигнал передачи в ведомого новой порции данных
 														stateSda <= STATE_PREPARE_RECEIVE_41;//переходим в состояние подготовки к отправке новой порции данных
@@ -216,9 +216,9 @@ begin
 												else
 													stateSda <= STATE_STOP_63;					//если пришло подтвреждение от ведомого, а посылать больше нечего, то заканчиваем отправку
 											end
-										else	
-											begin							//запись данных в ведомый	
-												if (waitSend) 			
+										else
+											begin							//запись данных в ведомый
+												if (waitSend)
 													begin	
 														waitSend <= 1'b0;							//сбрасываем сигнал передачи в ведомого новой порции данных
 														stateSda <= STATE_PREPARE_SEND_21;	//переходим в состояние подготовки к отправке новой порции данных
@@ -229,12 +229,12 @@ begin
 									end
 							end
 						else																	//если не пришло подтвреждение от ведомого, то заканчиваем посылку
-							stateSda <= STATE_STOP_63;						
+							stateSda <= STATE_STOP_63;
 					end
 				else
 					begin
 						if (sda == 0) 			//фиксируем наличие низкого уровня на линии sda
-							ask <= 1'b0;						
+							ask <= 1'b0;
 					end
 					
 				lockSended		<= 1'b0;							//сбрасываем сигнал уведомелния о передачи порции данных
@@ -247,7 +247,7 @@ begin
 						receivedBit<= 1'b1;
 					end
 				zsda	<= 1'b1;
-			end			
+			end
 			STATE_RECEIVE_42: begin
 				if (stateScl == STATE_RECEIVE_42) 
 					begin 								//ожидаем когда закончится этап считывание данных с ведомого
@@ -255,7 +255,7 @@ begin
 							begin
 								stateSda <= STATE_WAIT_GEN_ACK_32;
 								waitSend<= 1'b0;						//сбрасываем сигнал передачи в ведомого новой порции данных
-								waitReceive<= 1'b0;					//сбрасываем сигнал приема с ведомого новой порции данных							
+								waitReceive<= 1'b0;					//сбрасываем сигнал приема с ведомого новой порции данных
 								count <= COUNT_MAX4;
 							end
 						else
@@ -270,7 +270,7 @@ begin
 						receivedBit<= 1'b0;
 					end
 				zsda	<= 1'b1;
-			end	
+			end
 
 			STATE_PREPARE_STRETCH_51: begin
 				if (stateScl == STATE_PREPARE_STRETCH_51) 
@@ -296,7 +296,7 @@ begin
 				begin
 					stateSda <= STATE_ACK_33;
 				end
-			end		
+			end
 			
 			STATE_PREPARE_STRETCH_55: begin
 				if (stateScl == STATE_PREPARE_STRETCH_55) 
@@ -346,16 +346,16 @@ begin
 	else
 		begin
 			case (stateSda)
-			STATE_IDLE_0: begin		
+			STATE_IDLE_0: begin
 				zscl	<= 1'b1;
 				stateScl <= STATE_IDLE_0;
 				delay <= ZERO8;
-			end			
+			end
 			
-			STATE_START_11: begin		
+			STATE_START_11: begin
 				if (delay == HALF8+QUARTER8) 
 					begin //частота работы 100кГц берем интервал и просаживаем scl в ноль
-						stateScl <= STATE_START_11;									
+						stateScl <= STATE_START_11;
 						delay <= QUARTER8;
 					end
 				else 
@@ -364,7 +364,7 @@ begin
 					zscl	<= 1'b1;
 				else
 					zscl	<= 1'b0;
-			end	
+			end
 			STATE_WAIT_RESTART_12: begin
 				if (delay == HALF8) 
 					begin 
@@ -377,7 +377,7 @@ begin
 					zscl	<= 1'b0;
 				else
 					zscl	<= 1'b1;
-			end			
+			end
 			STATE_RESTART_13: begin
 				if (delay == HALF8) 
 					begin 
@@ -391,7 +391,7 @@ begin
 				else
 					zscl	<= 1'b0;
 			end
-			STATE_STOP_63: begin	
+			STATE_STOP_63: begin
 				if (delay == HALF8+HALF8) 
 					begin 
 						stateScl <= STATE_IDLE_0;
@@ -415,8 +415,8 @@ begin
 				else
 					delay <= delay + ONE8;
 				zscl	<= 1'b0;
-			end	
-			STATE_WAIT_GEN_ACK_32: begin		
+			end
+			STATE_WAIT_GEN_ACK_32: begin
 				if (delay == HALF8-STRETCH_2) 
 					begin 
 						stateScl <= STATE_WAIT_GEN_ACK_32;
@@ -443,11 +443,11 @@ begin
 						delay <= ZERO8;
 					end
 				else
-					delay <= delay + ONE8;	
+					delay <= delay + ONE8;
 				zscl	<= 1'b0;
-			end	
+			end
 			
-			STATE_SEND_22: begin		
+			STATE_SEND_22: begin
 				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_SEND_22;
@@ -456,7 +456,7 @@ begin
 				else
 					delay <= delay + ONE8;
 				zscl	<= 1'b1;
-			end				
+			end
 			STATE_ACK_33: begin
 				if (delay == HALF8) 
 					begin 
@@ -465,9 +465,9 @@ begin
 					end
 				else
 					delay <= delay + ONE8;
-				zscl	<= 1'b1;		
+				zscl	<= 1'b1;
 			end
-			STATE_RECEIVE_42: begin		
+			STATE_RECEIVE_42: begin
 				if (delay == HALF8) 
 					begin 
 						stateScl <= STATE_RECEIVE_42;
@@ -487,7 +487,7 @@ begin
 					begin
 						stateScl <= STATE_PREPARE_SEND_21;
 					end
-			end			
+			end
 			STATE_PREPARE_STRETCH_53: begin
 				stateScl <= STATE_PREPARE_STRETCH_53;
 				zscl	<= 1'b1;
@@ -497,7 +497,7 @@ begin
 					begin
 						stateScl <= STATE_WAIT_ACK_31;
 					end
-			end			
+			end
 			STATE_PREPARE_STRETCH_55: begin
 				stateScl <= STATE_PREPARE_STRETCH_55;
 				zscl	<= 1'b1;
@@ -507,7 +507,7 @@ begin
 					begin
 						stateScl <= STATE_WAIT_GEN_ACK_32;
 					end
-			end			
+			end
 			STATE_PREPARE_STRETCH_57: begin
 				stateScl <= STATE_PREPARE_STRETCH_57;
 				zscl	<= 1'b1;
