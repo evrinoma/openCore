@@ -41,5 +41,5 @@ Register status:
 
 Driver Master Schema
 --------------------------------------------
-<div align=center><img src="https://github.com/evrinoma/openCore/blob/master/DOC/img/i2c.png" height="200"/> </div>
+<div align=center><img src="https://github.com/evrinoma/openCore/blob/master/DOC/img/i2c.png" height="400"/> </div>
 
