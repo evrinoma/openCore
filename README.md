@@ -5,7 +5,7 @@ Verilog Implementation:
 * APB
     * Driver - I2C master
         * I2C - master
-        * I2C - mslave
+    * I2C - slave
     * 1-wire
     * RS-232
 
