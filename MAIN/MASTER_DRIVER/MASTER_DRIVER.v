@@ -149,12 +149,15 @@ reg 			lockReceive;
 reg			loadControlSt;		//защелкнуть сигнал управления St
 
 //Re - reserved
-//register status 
+//register  control 
 //  15 	14 13 12 11 10 	09 	08 	07	06	05 	04 	03	02 01 00
 //[ I2Cen				IntRx	IntTx	IntD	ST	Re	CLEAR	CLEAR	Re	Re	W	R	]
 //register length 
 //  31..16 			15..00
 //[ length Read	length Write]
+//register  status 
+//  15..04 	03 	      02	         01       00
+//[ Re  len	fromIsFull	fromIsEmpty	toIsFull	toIsEmpty	]
 
 reg[15:0]	cont;				//регистр управления контроллером 
 reg[6:0]		addr;				//регистр адресата 
