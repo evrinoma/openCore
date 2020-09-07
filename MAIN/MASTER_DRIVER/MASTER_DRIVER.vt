@@ -17,6 +17,8 @@ reg loadControl;
 
 reg toPut;
 reg [7:0]  dataTo;
+reg fromGet;
+wire [7:0]  dataFrom;
 
 // wires                                               
 wire [7:0]  datasend;
@@ -51,7 +53,9 @@ MASTER_DRIVER MASTER_DRIVER (
 	.loadControl(loadControl),	
 	.status(status),
 	.toPut(toPut),
-	.dataTo(dataTo)
+	.dataTo(dataTo),
+	.fromGet(fromGet),
+	.dataFrom(dataFrom)
 //	.startNew(startNew),
 //	.datasendNew(datasendNew) 
 );
@@ -152,6 +156,7 @@ begin
 			loadAddress = 1'b0;
 			loadLength = 1'b0;
 			toPut<=1'b0;
+			fromGet<=1'b0;
 			datareceive = 8'h77;			
 			isReady = 1'b1;
 			->EVENT_INIT_toFifoMemo;

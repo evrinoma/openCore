@@ -9,7 +9,9 @@ module MASTER_DRIVER(
 	loadControl,
 	status,
 	toPut,
-	dataTo
+	dataTo,
+	fromGet,
+	dataFrom
 );
 
 input		wire clk;
@@ -62,8 +64,8 @@ FIFO to (
 
 
 //блок фифо принимаемых данных
-wire fromGet;
-wire [7:0]  dataFrom;
+input wire fromGet;
+output wire [7:0]  dataFrom;
 wire fromIsEmpty;
 wire fromIsFull;
 
