@@ -1,10 +1,9 @@
-# I2C
+# MASTER_DRIVER
 --------------------------------------------
 Verilog Implementation:
 --------------------------------------------
 * Driver - I2C master
     * I2C - master
-* I2C - slave
 
 Driver master I2C Register map:
 --------------------------------------------
@@ -41,5 +40,5 @@ Register status:
 
 Driver Master Schema
 --------------------------------------------
-<div align=center><img src="https://github.com/evrinoma/openCore/blob/master/DOC/img/i2c.png" height="400"/> </div>
+<div align=center><img src="https://github.com/evrinoma/openCore/blob/master/DOC/img/MASTER_DRIVER.png" height="400"/> </div>
 
