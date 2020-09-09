@@ -1,0 +1,348 @@
+`timescale 10 ns/ 10 ps
+module MASTER_DRIVER_vlg_tst();
+
+// test vector input registers
+reg clk;
+reg [7:0] datareceive;
+reg isReady;
+reg received;
+reg sended;
+reg reset;
+reg [6:0] address;
+reg [31:0] length;
+reg [15:0] control;
+reg loadAddress;
+reg loadLength;
+reg loadControl;
+
+reg toPut;
+reg [7:0]  dataTo;
+reg fromGet;
+wire [7:0]  dataFrom;
+
+// wires
+wire [7:0]  datasend;
+wire [15:0] status;
+wire receive;
+wire send;
+wire start;
+
+//wire [7:0]  datasendNew;
+//wire startNew;
+
+reg [7:0] toFifoMemo [2:0];
+integer i = 0;
+
+MASTER_DRIVER MASTER_DRIVER (
+// port map - connection between master ports and signals/registers   
+	.clk(clk), //
+	.datareceive(datareceive),
+	.datasend(datasend), 
+	.receive(receive),
+	.received(received),
+	.send(send),
+	.sended(sended),
+	.start(start),
+	.reset(reset),
+	.isReady(isReady),
+	.address(address),
+	.length(length),
+	.control(control),
+	.loadAddress(loadAddress),
+	.loadLength(loadLength),
+	.loadControl(loadControl),
+	.status(status),
+	.toPut(toPut),
+	.dataTo(dataTo),
+	.fromGet(fromGet),
+	.dataFrom(dataFrom)
+//	.startNew(startNew),
+//	.datasendNew(datasendNew) 
+);
+
+always
+begin
+#5 clk = ~clk; //1MHz
+end
+
+event EVENT_SEND_LISTENER;				//запускаем слушатель события send и формируем сигнал sended
+event EVENT_RECEIVE_LISTENER;				//запускаем слушатель события send и формируем сигнал received
+event EVENT_SENDED;
+event EVENT_RECEIVED;
+
+event EVENT_INIT;
+event EVENT_INIT_toFifoMemo;
+
+event EVENT_RESET;
+event EVENT_SAVE_ADR;
+event EVENT_SAVE_LEN;
+event EVENT_SAVE_CONT;
+event EVENT_SAVE_CONT_ST;
+event EVENT_PUT_FIFO_TO;
+event EVENT_WAIT_FIFO_TO_EMPTY_STATUS;
+event EVENT_WAIT_LENGTH_EMPTY_STATUS;
+
+/////////////
+initial begin
+	forever begin
+			@(EVENT_SEND_LISTENER)
+				 @(negedge send)   
+				 ->EVENT_SEND_LISTENER;
+				 #5000 ->EVENT_SENDED;
+	end
+end
+
+initial begin
+	forever begin
+			@(EVENT_SEND_LISTENER)
+				 @(posedge send)  
+				 ->EVENT_SEND_LISTENER;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SENDED)
+			#0 
+			sended = 1'b1;
+			#100 
+			sended = 1'b0;
+			$display("%t : EVENT_SENDED",$realtime/1000);  
+	end
+end
+/////////////
+
+
+/////////////
+initial begin
+	forever begin
+			@(EVENT_RECEIVE_LISTENER)
+				 @(negedge receive) 
+				 ->EVENT_RECEIVE_LISTENER;
+				 #5000 ->EVENT_RECEIVED;
+	end
+end
+
+initial begin
+	forever begin
+			@(EVENT_RECEIVE_LISTENER)
+				 @(posedge receive)  
+				 ->EVENT_RECEIVE_LISTENER;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_RECEIVED)
+			#0 
+			datareceive = datareceive+2;
+			#100
+			received = 1'b1;
+			#100 
+			received = 1'b0;
+			$display("%t : EVENT_RECEIVED",$realtime/1000);  
+	end
+end
+/////////////
+
+initial 
+begin
+	forever begin
+		@(EVENT_INIT)
+			#0
+			clk = 1'b0;
+			loadAddress = 1'b0;
+			loadLength = 1'b0;
+			toPut<=1'b0;
+			fromGet<=1'b0;
+			datareceive = 8'h77;
+			isReady = 1'b1;
+			->EVENT_INIT_toFifoMemo;
+			#550
+			->EVENT_SEND_LISTENER;
+			->EVENT_RECEIVE_LISTENER;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_INIT_toFifoMemo)
+			toFifoMemo[0] = 8'hD0;
+			toFifoMemo[1] = 8'hD1;
+			toFifoMemo[2] = 8'hD2;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_RESET)
+			#0
+			reset = 1'b0;
+			//при сбросе i2c master выдает готовность и сбрасывает сигналы sended и received
+			isReady = 1'b1;
+			received = 1'b0;
+			sended = 1'b0;
+			isReady = 1'b1;
+			#1000
+			reset = 1'b1;
+	end
+end
+
+
+
+initial 
+begin
+	forever begin
+		@(EVENT_SAVE_ADR)
+			#0
+			address = 7'h77;
+			#100
+			loadAddress = 1'b1;
+			#100
+			loadAddress = 1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SAVE_LEN)
+			#0
+			length = 31'h00010001;
+			#100
+			loadLength = 1'b1;
+			#100
+			loadLength = 1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SAVE_CONT)
+			#0
+			control = 16'h0003;
+			#100
+			loadControl = 1'b1;
+			#100
+			loadControl = 1'b0;
+	end
+end
+
+initial 
+begin
+	forever begin
+		@(EVENT_SAVE_CONT_ST)
+			#0
+			control = control | 16'h0080;
+			#100
+			loadControl = 1'b1;
+			#100
+			loadControl = 1'b0;
+	end
+end
+
+initial begin
+  forever begin
+			@(EVENT_WAIT_FIFO_TO_EMPTY_STATUS)
+				 @(posedge status[0])
+				 $display("%t : a == 1    (1) %b",$realtime/1000, status[0]);    
+	  end
+end
+
+initial begin
+  forever begin
+			@(EVENT_WAIT_LENGTH_EMPTY_STATUS)
+				 @(posedge status[4])
+				 $display("%t : a == 1    (1) %b",$realtime/1000, status[0]);    
+	  end
+end
+
+
+
+initial 
+begin
+	forever begin
+		@(EVENT_PUT_FIFO_TO)
+			#0
+			dataTo = toFifoMemo[i];
+			i=i+1;
+			#5
+			toPut<=1'b1;
+			#10
+			toPut<=1'b0;
+			->EVENT_WAIT_FIFO_TO_EMPTY_STATUS;
+	end
+end
+
+//task test();
+//   fork : f
+//      begin
+//         // Timeout check
+//         #2000
+//         $display("%t : timeout", $time);
+//         disable f;
+//      end
+//      begin
+//         // Wait on signal
+//         @(posedge status[0]);
+//			//wait(status[0]);
+//         $display("%t : posedge signal", $time);
+//         disable f;
+//      end
+//   join
+//endtask
+
+//initial begin
+//	fork
+//      test;
+//      begin
+//        $display("Arrived at 1 %0t", $time);
+//      end
+//   join
+//   // test signal after timeout
+//   fork
+//      test;
+//      begin
+//        $display("Arrived at 2 %0t", $time);
+//      end
+//   join
+//end
+
+
+//initial begin
+//	 forever begin
+//			@(EVENT_INIT_WAIT_STATUS)
+//				fork
+//					test;
+//					begin
+//					  $display("Arrived at 2 %0t", $time);
+//					end
+//				join
+//	  end
+//end
+
+
+  
+initial 
+begin
+#0		->EVENT_INIT;
+#500	->EVENT_RESET;
+#900	->EVENT_SAVE_ADR;
+#1000	->EVENT_SAVE_LEN;
+#1100	->EVENT_SAVE_CONT;
+#1200	->EVENT_PUT_FIFO_TO;
+#2500	->EVENT_SAVE_CONT_ST;
+
+//#5000 ->EVENT_RECEIVED;
+//#5000 ->EVENT_RECEIVED;
+//#5000 ->EVENT_RECEIVED;
+#100000 $stop;
+end
+                                                   
+endmodule
+
