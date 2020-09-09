@@ -32,9 +32,6 @@ Documentation
 The source of the documentation is stored in the `DOC/` folder
 in this repo, and available on here:
 
-   Project openCore/MAIN/I2C_BMP180<br>
-   [Read the Documentation for I2C BMP180 logic](https://github.com/evrinoma/openCore/blob/master/DOC/I2C_BMP180.md)
-   
    Project openCore/MAIN/I2C_MASTER_SLAVE<br>
    [Read the Documentation for I2C MASTER_SLAVE logic](https://github.com/evrinoma/openCore/blob/master/DOC/I2C_MASTER_SLAVE.md)
 
